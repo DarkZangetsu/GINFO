@@ -2,8 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Utilisateur(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    id = models.AutoField(primary_key=True)
     utilisateur_id = models.IntegerField(null=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     nom = models.CharField(max_length=255, null=True, blank=True)
     prenom = models.CharField(max_length=255, null=True, blank=True)
     email = models.CharField(max_length=255, null=True, blank=True)
@@ -27,12 +28,13 @@ class Utilisateur(models.Model):
 
 
 class Information(models.Model):
+    id = models.AutoField(primary_key=True)
+    information_id = models.IntegerField(null=False)
     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='informations')
     numero_employe = models.CharField(max_length=255, null=True, blank=True)
     adresse = models.CharField(max_length=255, null=True, blank=True)
     numero_assurance = models.CharField(max_length=255, null=True, blank=True)
     ciin = models.CharField(max_length=255, null=True, blank=True)
-    id_externe = models.IntegerField(null=False)
     statut = models.BooleanField(null=False)
     
     def __str__(self):
@@ -40,25 +42,26 @@ class Information(models.Model):
 
 
 class Historique(models.Model):
-    id_externe = models.IntegerField(null=False)
-    date_creation = models.DateTimeField(auto_now_add=True)
-    derniere_modification = models.DateTimeField(auto_now=True)
-    description = models.TextField(blank=True, null=True)
-    type_action = models.CharField(max_length=50, blank=True, null=True)  # Par exemple: "envoi", "lecture", etc.
+    id = models.AutoField(primary_key=True)
+    historique_id = models.IntegerField(null=False)
+    date = models.DateTimeField(auto_now_add=True)
+    type_action = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     
     def __str__(self):
-        return f"Historique {self.pk} ({self.date_creation})"
+        return f"Historique {self.pk} ({self.date})"
 
 
 class Notification(models.Model):
+    id = models.AutoField(primary_key=True)
+    notification_id = models.IntegerField(null=False)
     historique = models.ForeignKey(Historique, on_delete=models.CASCADE, related_name='notifications')
     information = models.ForeignKey(Information, on_delete=models.CASCADE, related_name='notifications')
-    id_externe = models.IntegerField(null=False)
     objet = models.CharField(max_length=255, null=True, blank=True)
     contenu = models.CharField(max_length=255, null=True, blank=True)
     expediteur = models.CharField(max_length=255, null=True, blank=True)
     destinataire = models.CharField(max_length=255, null=True, blank=True)
-    date_envoi = models.CharField(max_length=255, null=True, blank=True)  # Vous pourriez préférer DateTimeField
+    date_envoi = models.DateTimeField(null=True, blank=True)  # Changé pour DateTimeField
     statut = models.BooleanField(null=False)
     
     def __str__(self):
@@ -70,12 +73,13 @@ class Notification(models.Model):
             description = f"Notification '{self.objet}' {type_action} à {self.destinataire}"
         
         # Création d'un nouvel historique ou mise à jour de l'existant
-        if not self.historique:
-            self.historique = Historique.objects.create(
-                id_externe=self.id_externe,
+        if not hasattr(self, 'historique') or not self.historique:
+            historique = Historique.objects.create(
+                historique_id=self.notification_id,
                 type_action=type_action,
                 description=description
             )
+            self.historique = historique
             self.save()
         else:
             self.historique.type_action = type_action
@@ -84,7 +88,8 @@ class Notification(models.Model):
 
 
 class Compagnie_Assurance(models.Model):
-    id_externe = models.IntegerField(null=False)
+    id = models.AutoField(primary_key=True)
+    compagnie_id = models.IntegerField(null=False)
     nom_compagnie = models.CharField(max_length=255, null=True, blank=True)
     adresse_compagnie = models.CharField(max_length=255, null=True, blank=True)
     email_compagnie = models.CharField(max_length=255, null=True, blank=True)
