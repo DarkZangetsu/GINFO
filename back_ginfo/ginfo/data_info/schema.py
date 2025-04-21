@@ -2,7 +2,7 @@ import graphene
 from graphql import GraphQLError
 from django.contrib.auth.models import User
 
-from back_ginfo.ginfo.data_info.mutation import CreateCompagnieAssurance, CreateHistorique, CreateInformation, CreateNotification, CreateUtilisateur, DeleteCompagnieAssurance, DeleteInformation, DeleteUtilisateur, UpdateCompagnieAssurance, UpdateInformation, UpdateUtilisateur
+from .mutation import CreateCompagnieAssurance, CreateHistorique, CreateInformation, CreateNotification, CreateUtilisateur, DeleteCompagnieAssurance, DeleteInformation, DeleteUtilisateur, UpdateCompagnieAssurance, UpdateInformation, UpdateUtilisateur
 
 from .djangoObjectType import CompagnieAssuranceType, HistoriqueType, InformationType, NotificationType, UtilisateurType
 from .models import Utilisateur, Information, Historique, Notification, Compagnie_Assurance

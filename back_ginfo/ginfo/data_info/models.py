@@ -2,14 +2,13 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Utilisateur(models.Model):
-    id = models.AutoField(primary_key=True)
-    utilisateur_id = models.IntegerField(null=False)
+    utilisateur_id = models.AutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     nom = models.CharField(max_length=255, null=True, blank=True)
     prenom = models.CharField(max_length=255, null=True, blank=True)
     email = models.CharField(max_length=255, null=True, blank=True)
     role = models.CharField(max_length=255, null=True, blank=True)
-    discriminator = models.CharField(max_length=255, null=False)
+    mot_de_passe = models.CharField(max_length=255)
     
     def __str__(self):
         return f"{self.prenom} {self.nom}"
@@ -24,12 +23,11 @@ class Utilisateur(models.Model):
             if self.prenom:
                 self.user.first_name = self.prenom
             self.user.save()
-        super().save(*args, **kwargs)
+        super().save(*args, **kwargs) 
 
 
 class Information(models.Model):
-    id = models.AutoField(primary_key=True)
-    information_id = models.IntegerField(null=False)
+    information_id = models.AutoField(primary_key=True)
     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='informations')
     numero_employe = models.CharField(max_length=255, null=True, blank=True)
     adresse = models.CharField(max_length=255, null=True, blank=True)
@@ -42,8 +40,7 @@ class Information(models.Model):
 
 
 class Historique(models.Model):
-    id = models.AutoField(primary_key=True)
-    historique_id = models.IntegerField(null=False)
+    historique_id = models.AutoField(primary_key=True)
     date = models.DateTimeField(auto_now_add=True)
     type_action = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -53,8 +50,7 @@ class Historique(models.Model):
 
 
 class Notification(models.Model):
-    id = models.AutoField(primary_key=True)
-    notification_id = models.IntegerField(null=False)
+    notification_id = models.AutoField(primary_key=True)
     historique = models.ForeignKey(Historique, on_delete=models.CASCADE, related_name='notifications')
     information = models.ForeignKey(Information, on_delete=models.CASCADE, related_name='notifications')
     objet = models.CharField(max_length=255, null=True, blank=True)
@@ -88,8 +84,7 @@ class Notification(models.Model):
 
 
 class Compagnie_Assurance(models.Model):
-    id = models.AutoField(primary_key=True)
-    compagnie_id = models.IntegerField(null=False)
+    compagnie_id = models.AutoField(primary_key=True)
     nom_compagnie = models.CharField(max_length=255, null=True, blank=True)
     adresse_compagnie = models.CharField(max_length=255, null=True, blank=True)
     email_compagnie = models.CharField(max_length=255, null=True, blank=True)

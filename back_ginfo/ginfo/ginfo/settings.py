@@ -63,7 +63,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 
-AUTH_USER_MODEL = 'data_info.Utilisateur'
+AUTH_USER_MODEL = 'auth.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
