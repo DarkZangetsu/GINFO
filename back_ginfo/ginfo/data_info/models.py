@@ -32,7 +32,7 @@ class Information(models.Model):
     numero_employe = models.CharField(max_length=255, null=True, blank=True)
     adresse = models.CharField(max_length=255, null=True, blank=True)
     numero_assurance = models.CharField(max_length=255, null=True, blank=True)
-    ciin = models.CharField(max_length=255, null=True, blank=True)
+    cin = models.CharField(max_length=255, null=True, blank=True)
     statut = models.BooleanField(null=False)
     
     def __str__(self):
