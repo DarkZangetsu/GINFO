@@ -2,7 +2,7 @@ import graphene
 from graphql import GraphQLError
 from django.contrib.auth.models import User
 
-from .mutation import CreateCompagnieAssurance, CreateHistorique, CreateInformation, CreateNotification, CreateUtilisateur, DeleteCompagnieAssurance, DeleteInformation, DeleteUtilisateur, UpdateCompagnieAssurance, UpdateInformation, UpdateUtilisateur
+from .mutation import CreateCompagnieAssurance, CreateHistorique, CreateInformation, CreateNotification, CreateUtilisateur, DeleteCompagnieAssurance, DeleteInformation, DeleteUtilisateur, LoginMutation, LogoutMutation, RefreshTokenMutation, UpdateCompagnieAssurance, UpdateInformation, UpdateUtilisateur
 
 from .djangoObjectType import CompagnieAssuranceType, HistoriqueType, InformationType, NotificationType, UtilisateurType
 from .models import Utilisateur, Information, Historique, Notification, Compagnie_Assurance
@@ -125,5 +125,10 @@ class Mutation(graphene.ObjectType):
     delete_utilisateur = DeleteUtilisateur.Field()
     delete_information = DeleteInformation.Field()
     delete_compagnie_assurance = DeleteCompagnieAssurance.Field()
+
+    #login
+    login = LoginMutation.Field()
+    refresh_token = RefreshTokenMutation.Field()
+    logout = LogoutMutation.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

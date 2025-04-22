@@ -1,18 +1,77 @@
+"use client"
+import { useState } from "react"
+import { useMutation, gql } from "@apollo/client"
+import { toast, Toaster } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// GraphQL Login Mutation
+const LOGIN_MUTATION = gql`
+  mutation Login($username: String!, $password: String!) {
+    login(username: $username, password: $password) {
+      success
+      message
+      token
+      refreshToken
+    }
+  }
+`;
+
 export function LoginForm({
   className,
   ...props
 }) {
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  const [loginMutation] = useMutation(LOGIN_MUTATION)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      const { data } = await loginMutation({
+        variables: {
+          username,
+          password
+        }
+      })
+
+      if (data.login.success) {
+        localStorage.setItem("token", data.login.token)
+        localStorage.setItem("refreshToken", data.login.refreshToken)
+        
+        toast.success("Connexion réussie", {
+          description: "Vous êtes maintenant connecté."
+        })
+
+        window.location.href = "/dashboard"
+      } else {
+        toast.error("Erreur de connexion", {
+          description: data.login.message || "Identifiants invalides"
+        })
+      }
+    } catch (error) {
+      toast.error("Erreur de connexion", {
+        description: "Une erreur s'est produite lors de la connexion."
+      })
+      console.error("Login error:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Toaster position="top-center" />
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -21,8 +80,15 @@ export function LoginForm({
                 </p>
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="m@example.com" required />
+                <Label htmlFor="username">Nom d'utilisateur</Label>
+                <Input 
+                  id="username" 
+                  type="text" 
+                  placeholder="username" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required 
+                />
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
@@ -31,10 +97,16 @@ export function LoginForm({
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required 
+                />
               </div>
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Connexion en cours..." : "Login"}
               </Button>
               <div
                 className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">

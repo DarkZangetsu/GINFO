@@ -3,10 +3,125 @@ import graphene
 from django.contrib.auth.models import User
 from graphql import GraphQLError
 
+from django.contrib.auth import authenticate
+from graphql import GraphQLError
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+
 from .input import CompagnieAssuranceInput, HistoriqueInput, InformationInput, NotificationInput, UtilisateurInput
 
 from .models import Utilisateur, Information, Historique, Notification, Compagnie_Assurance
 from .djangoObjectType import CompagnieAssuranceType, HistoriqueType, InformationType, NotificationType, UtilisateurType
+
+
+class LoginMutation(graphene.Mutation):
+    class Arguments:
+        username = graphene.String(required=True)
+        password = graphene.String(required=True)
+    
+    success = graphene.Boolean()
+    message = graphene.String()
+    token = graphene.String() 
+    refresh_token = graphene.String()
+    utilisateur = graphene.Field(UtilisateurType)
+    
+    @staticmethod
+    def mutate(root, info, username, password):
+        # Authentifier l'utilisateur
+        user = authenticate(username=username, password=password)
+        
+        if user is None:
+            return LoginMutation(
+                success=False,
+                message="Identifiants invalides",
+                token=None,
+                refresh_token=None,
+                utilisateur=None
+            )
+        
+        if not user.is_active:
+            return LoginMutation(
+                success=False,
+                message="Ce compte a été désactivé",
+                token=None,
+                refresh_token=None,
+                utilisateur=None
+            )
+        
+        # Récupérer le profil Utilisateur associé
+        try:
+            profile = Utilisateur.objects.get(user=user)
+        except Utilisateur.DoesNotExist:
+            return LoginMutation(
+                success=False,
+                message="Profil utilisateur non trouvé",
+                token=None,
+                refresh_token=None,
+                utilisateur=None
+            )
+        
+        # Générer les tokens JWT
+        refresh = RefreshToken.for_user(user)
+        
+        return LoginMutation(
+            success=True,
+            message="Connexion réussie",
+            token=str(refresh.access_token),  
+            refresh_token=str(refresh), 
+            utilisateur=profile
+        )
+
+# mutation pour rafraîchir le token
+class RefreshTokenMutation(graphene.Mutation):
+    class Arguments:
+        refresh_token = graphene.String(required=True)
+    
+    success = graphene.Boolean()
+    message = graphene.String()
+    token = graphene.String()
+    
+    @staticmethod
+    def mutate(root, info, refresh_token):
+        try:        
+            # Vérifier et rafraîchir le token
+            refresh = RefreshToken(refresh_token)
+            
+            return RefreshTokenMutation(
+                success=True,
+                message="Token rafraîchi avec succès",
+                token=str(refresh.access_token)
+            )
+        except Exception as e:
+            return RefreshTokenMutation(
+                success=False,
+                message=f"Erreur lors du rafraîchissement du token: {str(e)}",
+                token=None
+            )
+
+#mutation pour la déconnexion
+class LogoutMutation(graphene.Mutation):
+    class Arguments:
+        refresh_token = graphene.String(required=True)
+    
+    success = graphene.Boolean()
+    message = graphene.String()
+    
+    @staticmethod
+    def mutate(root, info, refresh_token):
+        try:       
+            # Blacklister le token
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            
+            return LogoutMutation(
+                success=True,
+                message="Déconnexion réussie"
+            )
+        except Exception as e:
+            return LogoutMutation(
+                success=False,
+                message=f"Erreur lors de la déconnexion: {str(e)}"
+            )
 
 class CreateUtilisateur(graphene.Mutation):
     class Arguments:
