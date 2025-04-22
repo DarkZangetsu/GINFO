@@ -1,5 +1,5 @@
 import * as React from "react"
-import { InfoIcon } from "lucide-react"
+import { InfoIcon, LayoutDashboard, Users, Bell, FileText, PieChart } from "lucide-react"
 
 import {
   Sidebar,
@@ -20,29 +20,35 @@ const data = {
     {
       title: "Aperçu",
       url: "#",
+      icon: <PieChart className="size-4 mr-2" />,
       items: [
         {
           title: "Tableau de bord",
           url: "#",
           isActive: true,
+          icon: <LayoutDashboard className="size-4 mr-2" />
         },
       ],
     },
     {
       title: "Gestion",
       url: "#",
+      icon: <FileText className="size-4 mr-2" />,
       items: [
         {
           title: "Utilisateurs",
           url: "#",
+          icon: <Users className="size-4 mr-2" />
         },
         {
           title: "Notifications",
           url: "#",
+          icon: <Bell className="size-4 mr-2" />
         },
         {
           title: "Informations",
           url: "#",
+          icon: <InfoIcon className="size-4 mr-2" />
         },
       ],
     },
@@ -77,16 +83,20 @@ export function AppSidebar({
             {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
-                  <a href={item.url} className="font-medium">
+                  <a href={item.url} className="font-medium flex items-center">
+                    {item.icon}
                     {item.title}
                   </a>
                 </SidebarMenuButton>
                 {item.items?.length ? (
                   <SidebarMenuSub>
-                    {item.items.map((item) => (
-                      <SidebarMenuSubItem key={item.title}>
-                        <SidebarMenuSubButton asChild isActive={item.isActive}>
-                          <a href={item.url}>{item.title}</a>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton asChild isActive={subItem.isActive}>
+                          <a href={subItem.url} className="flex items-center">
+                            {subItem.icon}
+                            {subItem.title}
+                          </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
