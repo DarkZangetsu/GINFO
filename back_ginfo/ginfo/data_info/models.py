@@ -58,6 +58,7 @@ class Notification(models.Model):
     expediteur = models.CharField(max_length=255, null=True, blank=True)
     destinataire = models.CharField(max_length=255, null=True, blank=True)
     date_envoi = models.DateTimeField(null=True, blank=True) 
+    statut = models.BooleanField(null=True)
     
     def __str__(self):
         return f"{self.objet} ({self.date_envoi})"

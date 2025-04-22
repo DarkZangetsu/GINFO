@@ -2,17 +2,16 @@ import graphene
 
 
 class UtilisateurInput(graphene.InputObjectType):
-    utilisateur_id = graphene.Int(required=True)
+    utilisateur_id = graphene.Int()
     nom = graphene.String()
     prenom = graphene.String()
     email = graphene.String()
     role = graphene.String()
-    discriminator = graphene.String(required=True)
-    username = graphene.String()  # Pour créer le User associé
-    password = graphene.String()  # Pour créer le User associé
+    username = graphene.String()  
+    password = graphene.String()
 
 class InformationInput(graphene.InputObjectType):
-    information_id = graphene.Int(required=True)
+    information_id = graphene.Int()
     utilisateur_id = graphene.ID(required=True)
     numero_employe = graphene.String()
     adresse = graphene.String()
@@ -26,7 +25,7 @@ class HistoriqueInput(graphene.InputObjectType):
     description = graphene.String()
 
 class NotificationInput(graphene.InputObjectType):
-    notification_id = graphene.Int(required=True)
+    notification_id = graphene.Int()
     historique_id = graphene.ID(required=True)
     information_id = graphene.ID(required=True)
     objet = graphene.String()
@@ -37,7 +36,7 @@ class NotificationInput(graphene.InputObjectType):
     statut = graphene.Boolean(required=True)
 
 class CompagnieAssuranceInput(graphene.InputObjectType):
-    compagnie_id = graphene.Int(required=True)
+    compagnie_id = graphene.Int()
     nom_compagnie = graphene.String()
     adresse_compagnie = graphene.String()
     email_compagnie = graphene.String()

@@ -128,34 +128,71 @@ class CreateUtilisateur(graphene.Mutation):
         utilisateur_data = UtilisateurInput(required=True)
         
     utilisateur = graphene.Field(UtilisateurType)
+    success = graphene.Boolean()
+    message = graphene.String()
+    token = graphene.String()
+    refresh_token = graphene.String()
     
     @staticmethod
     def mutate(root, info, utilisateur_data):
-        # Créer le User d'abord si username et password fournis
-        user = None
-        if hasattr(utilisateur_data, 'username') and hasattr(utilisateur_data, 'password'):
+        try:
+            username = utilisateur_data.get('username')
+            password = utilisateur_data.get('password')
+            email = utilisateur_data.get('email')
+            nom = utilisateur_data.get('nom')
+            prenom = utilisateur_data.get('prenom')
+            role = utilisateur_data.get('role')
+            
+            if not username or not password:
+                return CreateUtilisateur(
+                    utilisateur=None,
+                    success=False, 
+                    message="Nom d'utilisateur et mot de passe requis"
+                )
+                
+            if User.objects.filter(username=username).exists():
+                return CreateUtilisateur(
+                    utilisateur=None,
+                    success=False, 
+                    message="Cet utilisateur existe déjà"
+                )
+            
             user = User.objects.create_user(
-                username=utilisateur_data.username,
-                email=utilisateur_data.email,
-                password=utilisateur_data.password,
-                first_name=utilisateur_data.prenom,
-                last_name=utilisateur_data.nom
+                username=username,
+                email=email,
+                password=password,
+                first_name=prenom if prenom else "",
+                last_name=nom if nom else ""
             )
-        
-        # Créer l'Utilisateur
-        utilisateur = Utilisateur(
-            utilisateur_id=utilisateur_data.utilisateur_id,
-            nom=utilisateur_data.nom,
-            prenom=utilisateur_data.prenom,
-            email=utilisateur_data.email,
-            role=utilisateur_data.role,
-            discriminator=utilisateur_data.discriminator
-        )
-        if user:
-            utilisateur.user = user
-        utilisateur.save()
-        
-        return CreateUtilisateur(utilisateur=utilisateur)
+            
+            utilisateur = Utilisateur(
+                user=user,
+                nom=nom,
+                prenom=prenom,
+                email=email,
+                role=role,
+                mot_de_passe=password 
+            )
+            utilisateur.save()
+            
+            refresh = RefreshToken.for_user(user)
+            token = str(refresh.access_token)
+            refresh_token = str(refresh)
+            
+            return CreateUtilisateur(
+                utilisateur=utilisateur,
+                success=True, 
+                message="Utilisateur créé avec succès",
+                token=token,
+                refresh_token=refresh_token
+            )
+            
+        except Exception as e:
+            return CreateUtilisateur(
+                utilisateur=None,
+                success=False, 
+                message=f"Erreur lors de la création de l'utilisateur: {str(e)}"
+            )
 
 class CreateInformation(graphene.Mutation):
     class Arguments:
@@ -270,15 +307,13 @@ class UpdateUtilisateur(graphene.Mutation):
                 utilisateur.email = utilisateur_data.email
             if hasattr(utilisateur_data, 'role'):
                 utilisateur.role = utilisateur_data.role
-            if hasattr(utilisateur_data, 'discriminator'):
-                utilisateur.discriminator = utilisateur_data.discriminator
                 
             utilisateur.save()
             
             return UpdateUtilisateur(utilisateur=utilisateur)
         except Utilisateur.DoesNotExist:
             raise GraphQLError(f"Utilisateur avec ID {id} n'existe pas")
-
+        
 class UpdateInformation(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
