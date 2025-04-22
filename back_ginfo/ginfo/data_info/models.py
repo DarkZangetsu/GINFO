@@ -44,7 +44,7 @@ class Historique(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     type_action = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    
+     
     def __str__(self):
         return f"Historique {self.pk} ({self.date})"
 
@@ -57,8 +57,7 @@ class Notification(models.Model):
     contenu = models.CharField(max_length=255, null=True, blank=True)
     expediteur = models.CharField(max_length=255, null=True, blank=True)
     destinataire = models.CharField(max_length=255, null=True, blank=True)
-    date_envoi = models.DateTimeField(null=True, blank=True)  # Changé pour DateTimeField
-    statut = models.BooleanField(null=False)
+    date_envoi = models.DateTimeField(null=True, blank=True) 
     
     def __str__(self):
         return f"{self.objet} ({self.date_envoi})"
