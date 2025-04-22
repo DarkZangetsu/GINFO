@@ -1,5 +1,9 @@
+"use client"
 import * as React from "react"
-import { InfoIcon, LayoutDashboard, Users, Bell, FileText, PieChart } from "lucide-react"
+import { useState } from "react"
+import { useMutation, gql } from "@apollo/client"
+import { toast } from "sonner"
+import { InfoIcon, LayoutDashboard, Users, Bell, FileText, PieChart, LogOut } from "lucide-react"
 
 import {
   Sidebar,
@@ -13,7 +17,17 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  SidebarFooter
 } from "@/components/ui/sidebar"
+
+const LOGOUT_MUTATION = gql`
+ mutation Logout($refreshToken: String!) {
+  logout(refreshToken: $refreshToken) {
+    success
+    message
+  }
+}
+`;
 
 const data = {
   navMain: [
@@ -58,6 +72,56 @@ const data = {
 export function AppSidebar({
   ...props
 }) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [logoutMutation] = useMutation(LOGOUT_MUTATION)
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      // Récupérer le refreshToken depuis le localStorage
+      const refreshToken = localStorage.getItem("refreshToken")
+      
+      // Vérifier si le refreshToken existe
+      if (!refreshToken) {
+        toast.error("Erreur de déconnexion", {
+          description: "Aucun token de rafraîchissement trouvé."
+        })
+        setIsLoggingOut(false)
+        return
+      }
+      
+      const { data } = await logoutMutation({
+        variables: {
+          refreshToken: refreshToken
+        }
+      })
+      
+      if (data.logout.success) {
+        // Supprimer les tokens du localStorage
+        localStorage.removeItem("token")
+        localStorage.removeItem("refreshToken")
+        
+        toast.success("Déconnexion réussie", {
+          description: "Vous avez été déconnecté avec succès."
+        })
+        
+        // Rediriger vers la page de connexion
+        window.location.href = "/login"
+      } else {
+        toast.error("Erreur de déconnexion", {
+          description: data.logout.message || "Une erreur est survenue lors de la déconnexion."
+        })
+      }
+    } catch (error) {
+      toast.error("Erreur de déconnexion", {
+        description: "Une erreur s'est produite lors de la déconnexion."
+      })
+      console.error("Logout error:", error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -107,6 +171,22 @@ export function AppSidebar({
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="border-t pt-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+            >
+              <button className="flex items-center w-full">
+                <LogOut className="size-4 mr-2" />
+                {isLoggingOut ? "Déconnexion..." : "Se déconnecter"}
+              </button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
