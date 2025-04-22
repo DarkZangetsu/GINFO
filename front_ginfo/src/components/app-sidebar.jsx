@@ -109,11 +109,9 @@ export function AppSidebar({
       })
       
       if (data.logout.success) {
-        // Supprimer les tokens du localStorage
         localStorage.removeItem("token")
         localStorage.removeItem("refreshToken")
         
-        // Afficher un toast de confirmation avec animation
         toast.success("Déconnexion réussie", {
           description: "Vous avez été déconnecté avec succès.",
           position: "top-center",
@@ -121,12 +119,8 @@ export function AppSidebar({
           className: "animate-in fade-in slide-in-from-top",
         })
         
-        // Ajouter un délai avant la redirection pour permettre à l'utilisateur de voir le toast
         setTimeout(() => {
-          // Ajouter une classe pour l'animation de transition avant la redirection
           document.body.classList.add('fade-out')
-          
-          // Rediriger vers la page de connexion après la transition
           setTimeout(() => {
             window.location.href = "/login"
           }, 500)
