@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-// GraphQL Create Utilisateur Mutation
 const CREATE_UTILISATEUR_MUTATION = gql`
   mutation CreateUtilisateur(
     $username: String!, 
@@ -21,20 +20,25 @@ const CREATE_UTILISATEUR_MUTATION = gql`
   ) {
     createUtilisateur(
       utilisateurData: {
-        utilisateurId: null
+        username: $username
+        password: $password
         nom: $nom
         prenom: $prenom
         email: $email
         role: $role
-        discriminator: null
-        username: $username
-        password: $password
       }
     ) {
       success
       message
       token
       refreshToken
+      utilisateur {
+        utilisateurId
+        nom
+        prenom
+        email
+        role
+      }
     }
   }
 `;
@@ -73,7 +77,7 @@ export function RegisterForm({
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Vérification que les mots de passe correspondent
     if (formData.password !== formData.confirmPassword) {
       toast.error("Erreur", {
@@ -97,15 +101,17 @@ export function RegisterForm({
       })
 
       if (data?.createUtilisateur?.success) {
+        // Stockage du token si disponible
         if (data.createUtilisateur.token) {
           localStorage.setItem("token", data.createUtilisateur.token)
           localStorage.setItem("refreshToken", data.createUtilisateur.refreshToken)
         }
-        
+
         toast.success("Inscription réussie", {
           description: "Votre compte a été créé avec succès."
         })
 
+        // Redirection vers le dashboard ou la page de connexion
         window.location.href = data.createUtilisateur.token ? "/dashboard" : "/login"
       } else {
         toast.error("Erreur d'inscription", {
@@ -114,7 +120,7 @@ export function RegisterForm({
       }
     } catch (error) {
       toast.error("Erreur d'inscription", {
-        description: "Une erreur s'est produite lors de l'inscription."
+        description: error.message || "Une erreur s'est produite lors de l'inscription."
       })
       console.error("Registration error:", error)
     } finally {
@@ -135,13 +141,13 @@ export function RegisterForm({
                   Inscrivez-vous pour accéder à votre espace
                 </p>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="prenom">Prénom</Label>
-                  <Input 
-                    id="prenom" 
-                    type="text" 
+                  <Input
+                    id="prenom"
+                    type="text"
                     placeholder="Prénom"
                     value={formData.prenom}
                     onChange={handleChange}
@@ -149,66 +155,66 @@ export function RegisterForm({
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="nom">Nom</Label>
-                  <Input 
-                    id="nom" 
-                    type="text" 
+                  <Input
+                    id="nom"
+                    type="text"
                     placeholder="Nom"
                     value={formData.nom}
                     onChange={handleChange}
                   />
                 </div>
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
+                <Input
+                  id="email"
+                  type="email"
                   placeholder="votre@email.com"
                   value={formData.email}
                   onChange={handleChange}
                   required
                 />
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="username">Nom d'utilisateur</Label>
-                <Input 
-                  id="username" 
-                  type="text" 
+                <Input
+                  id="username"
+                  type="text"
                   placeholder="nom_utilisateur"
                   value={formData.username}
                   onChange={handleChange}
                   required
                 />
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="password">Mot de passe</Label>
-                <Input 
-                  id="password" 
+                <Input
+                  id="password"
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
                   required
                 />
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="confirmPassword">Confirmez le mot de passe</Label>
-                <Input 
-                  id="confirmPassword" 
+                <Input
+                  id="confirmPassword"
                   type="password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
                 />
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="role">Rôle</Label>
-                <Select 
-                  value={formData.role} 
+                <Select
+                  value={formData.role}
                   onValueChange={handleRoleChange}
                 >
                   <SelectTrigger>
@@ -221,11 +227,11 @@ export function RegisterForm({
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Inscription en cours..." : "S'inscrire"}
               </Button>
-              
+
               <div className="text-center text-sm">
                 Vous avez déjà un compte?{" "}
                 <a href="/login" className="underline underline-offset-4">
@@ -238,7 +244,7 @@ export function RegisterForm({
             <img
               src="/placeholder.svg"
               alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale" 
+              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
             />
           </div>
         </CardContent>
