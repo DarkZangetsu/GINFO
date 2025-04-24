@@ -21,7 +21,7 @@ export const GET_UTILISATEURS = gql`
 `;
 
 export const GET_UTILISATEUR = gql`
-  query UtilisateurById ($id: ID!) {
+  query UtilisateurById($id: ID!) {
     utilisateurById(id: $id) {
       utilisateurId
       nom

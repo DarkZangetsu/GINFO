@@ -42,42 +42,12 @@ import { Badge } from "@/components/ui/badge";
 import { Toaster, toast } from "sonner";
 import { User, Mail, MapPin, Edit, Save, FileText, Shield } from "lucide-react";
 import { useForm } from "react-hook-form";
-
-const GET_UTILISATEUR = gql`
-  query UtilisateurById($id: ID!) {
-    utilisateurById(id: $id) {
-      utilisateurId
-      nom
-      prenom
-      email
-      role
-      informations {
-        numeroEmploye
-        adresse
-        numeroAssurance
-        cin
-        statut
-      }
-    }
-  }
-`;
-
-const UPDATE_UTILISATEUR = gql`
-  mutation UpdateUtilisateur($id: ID!, $utilisateurData: UtilisateurInput!) {
-    updateUtilisateur(id: $id, utilisateurData: $utilisateurData) {
-      utilisateur {
-        utilisateurId
-        nom
-        prenom
-        email
-        role
-      }
-    }
-  }
-`;
+import { GET_UTILISATEUR, UPDATE_UTILISATEUR } from "@/query/utilisateur";
 
 export default function ProfilePage() {
   const [userId, setUserId] = useState(null);
+  const [updateUtilisateur] = useMutation(UPDATE_UTILISATEUR);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -123,8 +93,6 @@ export default function ProfilePage() {
     }
   });
 
-  const [updateUtilisateur] = useMutation(UPDATE_UTILISATEUR);
-  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     if (data && data.utilisateurById) {
@@ -233,7 +201,6 @@ export default function ProfilePage() {
       }
     }
 
-    // Si statut est undefined ou null
     return "outline";
   };
 

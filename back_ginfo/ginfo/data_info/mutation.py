@@ -367,22 +367,18 @@ class UpdateCompagnieAssurance(graphene.Mutation):
         try:
             compagnie = Compagnie_Assurance.objects.get(pk=id)
             
-            # Mettre à jour les champs
-            if hasattr(compagnie_data, 'compagnie_id'):
+            if hasattr(compagnie_data, 'compagnie_id') and compagnie_data.compagnie_id is not None:
                 compagnie.compagnie_id = compagnie_data.compagnie_id
-            if hasattr(compagnie_data, 'nom_compagnie'):
+            if hasattr(compagnie_data, 'nom_compagnie') and compagnie_data.nom_compagnie is not None:
                 compagnie.nom_compagnie = compagnie_data.nom_compagnie
-            if hasattr(compagnie_data, 'adresse_compagnie'):
+            if hasattr(compagnie_data, 'adresse_compagnie') and compagnie_data.adresse_compagnie is not None:
                 compagnie.adresse_compagnie = compagnie_data.adresse_compagnie
-            if hasattr(compagnie_data, 'email_compagnie'):
+            if hasattr(compagnie_data, 'email_compagnie') and compagnie_data.email_compagnie is not None:
                 compagnie.email_compagnie = compagnie_data.email_compagnie
                 
-            # Mettre à jour les notifications si fournies
-            if hasattr(compagnie_data, 'notification_ids') and compagnie_data.notification_ids:
-                compagnie.notifications.clear()  # Supprimer les anciennes associations
-                for notification_id in compagnie_data.notification_ids:
-                    notification = Notification.objects.get(pk=notification_id)
-                    compagnie.notifications.add(notification)
+            if hasattr(compagnie_data, 'notification_ids') and compagnie_data.notification_ids is not None:
+                notifications = Notification.objects.filter(pk__in=compagnie_data.notification_ids)
+                compagnie.notifications.set(notifications)
                 
             compagnie.save()
             
