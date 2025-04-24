@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class Utilisateur(models.Model):
     utilisateur_id = models.AutoField(primary_key=True)
@@ -37,6 +38,44 @@ class Information(models.Model):
     
     def __str__(self):
         return f"Info de {self.utilisateur}"
+    
+    def save(self, *args, **kwargs):
+        creation = not self.pk
+        
+        # Si c'est une mise à jour, récupére l'état précédent
+        if not creation:
+            ancien_etat = Information.objects.get(pk=self.pk)
+            ancien_statut = ancien_etat.statut
+        else:
+            ancien_statut = False
+            
+        # Enregistrer l'objet
+        super().save(*args, **kwargs)
+        
+        # Si c'est une création avec statut True ou une mise à jour de False à True
+        if (creation and self.statut) or (not creation and not ancien_statut and self.statut):
+            self.creer_notification()
+    
+    def creer_notification(self):
+        """Crée une notification lorsqu'une information est ajoutée avec statut True ou passe de False à True"""
+        historique = Historique.objects.create(
+            type_action="envoye",
+            description=f"Information {self.information_id} confirmé pour l'utilisateur {self.utilisateur}"
+        )
+        
+        # Créer la notification associée
+        notification = Notification.objects.create(
+            historique=historique,
+            information=self,
+            objet="Confirmation d'information",
+            contenu=f"L'information {self.information_id} pour {self.utilisateur} a été confirmé bien à jour",
+            expediteur="Système",
+            destinataire=self.utilisateur.email if self.utilisateur.email else "Administration",
+            date_envoi=timezone.now(),
+            statut=True
+        )
+        
+        return notification
 
 
 class Historique(models.Model):
