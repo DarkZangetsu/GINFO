@@ -3,7 +3,7 @@ import * as React from "react"
 import { useState } from "react"
 import { useMutation, gql } from "@apollo/client"
 import { toast } from "sonner"
-import { InfoIcon, LayoutDashboard, Users, Bell, FileText, PieChart, LogOut } from "lucide-react"
+import { InfoIcon, LayoutDashboard, Users, Bell, FileText, PieChart, LogOut, HistoryIcon, SaveOffIcon, Shield } from "lucide-react"
 
 import {
   Sidebar,
@@ -67,13 +67,23 @@ const data = {
         },
         {
           title: "Notifications",
-          url: "#",
+          url: "",
           icon: <Bell className="size-4 mr-2" />
         },
         {
           title: "Informations",
-          url: "#",
+          url: "/informations",
           icon: <InfoIcon className="size-4 mr-2" />
+        },
+        {
+          title: "Historiques",
+          url: "",
+          icon: <HistoryIcon className="size-4 mr-2" />
+        },
+        {
+          title: "Compagnie Assurance",
+          url: "",
+          icon: <Shield className="size-4 mr-2" />
         },
       ],
     },
