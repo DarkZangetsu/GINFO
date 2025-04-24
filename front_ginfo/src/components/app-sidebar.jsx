@@ -3,7 +3,7 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import { useMutation, gql } from "@apollo/client"
 import { toast } from "sonner"
-import { InfoIcon, LayoutDashboard, Users, Bell, FileText, PieChart, LogOut, HistoryIcon, SaveOffIcon, Shield } from "lucide-react"
+import { InfoIcon, LayoutDashboard, Users, Bell, FileText, PieChart, LogOut, HistoryIcon, SaveOffIcon, Shield, User } from "lucide-react"
 
 import {
   Sidebar,
@@ -60,6 +60,11 @@ const data = {
       url: "#",
       icon: <FileText className="size-4 mr-2" />,
       items: [
+        {
+          title: "Profil",
+          url: "/profil",
+          icon: <User className="size-4 mr-2" />
+        },
         {
           title: "Utilisateurs",
           url: "/utilisateurs",

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client";
-import { gql } from "@apollo/client";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -48,16 +47,26 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast, Toaster } from "sonner";
-import { PlusCircle, Pencil, Trash2, Check, X, Mail } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Check, X, Mail, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { CREATE_INFORMATION, DELETE_INFORMATION, GET_INFORMATIONS, UPDATE_INFORMATION } from "@/query/information";
 
+import {  GET_UTILISATEURS  } from "@/query/utilisateur";
 
 export default function InformationsPage() {
   const router = useRouter();
   const { data, loading, error, refetch } = useQuery(GET_INFORMATIONS);
+  const { data: utilisateursData, loading: loadingUtilisateurs } = useQuery(GET_UTILISATEURS);
+  
   const [createInformation] = useMutation(CREATE_INFORMATION);
   const [updateInformation] = useMutation(UPDATE_INFORMATION);
   const [deleteInformation] = useMutation(DELETE_INFORMATION);
@@ -68,11 +77,12 @@ export default function InformationsPage() {
   const [currentInformation, setCurrentInformation] = useState(null);
   const [userId, setUserId] = useState(null);
   const [formData, setFormData] = useState({
+    utilisateurId: "", // Ajout de l'ID de l'utilisateur sélectionné
     numeroEmploye: "",
     adresse: "",
     numeroAssurance: "",
     cin: "",
-    emailNotification: "", // Nouveau champ pour l'email de notification
+    emailNotification: "",
     statut: false 
   });
 
@@ -107,18 +117,23 @@ export default function InformationsPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Gestionnaire pour le changement d'utilisateur dans le Select
+  const handleUtilisateurChange = (value) => {
+    setFormData(prev => ({ ...prev, utilisateurId: value }));
+  };
+
   const handleStatusChange = (checked) => {
     setFormData(prev => ({ ...prev, statut: checked }));
   };
 
-
   const openCreateModal = () => {
     setFormData({
+      utilisateurId: "", // Réinitialiser l'ID de l'utilisateur
       numeroEmploye: "",
       adresse: "",
       numeroAssurance: "",
       cin: "",
-      emailNotification: "", // Réinitialiser l'email de notification
+      emailNotification: "",
       statut: false 
     });
     setIsCreateModalOpen(true);
@@ -127,44 +142,42 @@ export default function InformationsPage() {
   const openEditModal = (information) => {
     setCurrentInformation(information);
     setFormData({
+      utilisateurId: information.utilisateur?.utilisateurId || "", // Récupérer l'ID de l'utilisateur associé
       numeroEmploye: information.numeroEmploye || "",
       adresse: information.adresse || "",
       numeroAssurance: information.numeroAssurance || "",
       cin: information.cin || "",
-      emailNotification: information.emailNotification || "", // Récupérer l'email de notification existant
+      emailNotification: information.emailNotification || "",
       statut: Boolean(information.statut) 
     });
     setIsEditModalOpen(true);
   };
 
-  // Ouvrir le dialogue de confirmation de suppression
   const openDeleteDialog = (information) => {
     setCurrentInformation(information);
     setIsDeleteDialogOpen(true);
   };
 
-  // Soumission du formulaire de création
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     
-    if (!userId) {
-      toast.error("Utilisateur non identifié", {
-        description: "Impossible de créer l'information."
+    if (!formData.utilisateurId) {
+      toast.error("Erreur", {
+        description: "Veuillez sélectionner un utilisateur."
       });
       return;
     }
   
     console.log("FormData avant envoi:", formData);
-    console.log("UserID:", userId);
   
     try {
       const informationInput = {
-        utilisateurId: userId,
+        utilisateurId: formData.utilisateurId, // Utiliser l'ID de l'utilisateur sélectionné, pas celui connecté
         numeroEmploye: formData.numeroEmploye,
         adresse: formData.adresse,
         numeroAssurance: formData.numeroAssurance,
         cin: formData.cin,
-        emailNotification: formData.emailNotification, // Inclure l'email de notification
+        emailNotification: formData.emailNotification,
         statut: formData.statut
       };
   
@@ -194,9 +207,9 @@ export default function InformationsPage() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     
-    if (!userId) {
-      toast.error("Utilisateur non identifié", {
-        description: "Impossible de modifier l'information."
+    if (!formData.utilisateurId) {
+      toast.error("Erreur", {
+        description: "Veuillez sélectionner un utilisateur."
       });
       return;
     }
@@ -206,12 +219,13 @@ export default function InformationsPage() {
   
     try {
       const informationInput = {
-        utilisateurId: userId,
+        utilisateurId: formData.utilisateurId,
         numeroEmploye: formData.numeroEmploye,
         adresse: formData.adresse,
         numeroAssurance: formData.numeroAssurance,
         cin: formData.cin,
-        emailNotification: formData.emailNotification, 
+        emailNotification: formData.emailNotification,
+        statut: formData.statut
       };
   
       console.log("Structure finale pour mise à jour:", informationInput);
@@ -237,9 +251,7 @@ export default function InformationsPage() {
       });
     }
   };
-  
 
-  // Confirmer la suppression
   const handleDelete = async () => {
     try {
       await deleteInformation({
@@ -258,6 +270,14 @@ export default function InformationsPage() {
       });
       console.error("Erreur lors de la suppression:", error);
     }
+  };
+
+  // Fonction pour obtenir le nom complet d'un utilisateur
+  const getUserFullName = (utilisateurId) => {
+    if (!utilisateursData || !utilisateursData.utilisateurs) return "Inconnu";
+    
+    const utilisateur = utilisateursData.utilisateurs.find(u => u.utilisateurId === utilisateurId);
+    return utilisateur ? `${utilisateur.prenom} ${utilisateur.nom}` : "Inconnu";
   };
 
   return (
@@ -303,6 +323,7 @@ export default function InformationsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Employé</TableHead>
                     <TableHead>N° Employé</TableHead>
                     <TableHead>Adresse</TableHead>
                     <TableHead>N° Assurance</TableHead>
@@ -316,6 +337,12 @@ export default function InformationsPage() {
                   {data?.informations.length > 0 ? (
                     data.informations.map((info) => (
                       <TableRow key={info.informationId}>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2 text-gray-500" />
+                            {info.utilisateur ? `${info.utilisateur.prenom} ${info.utilisateur.nom}` : "Non assigné"}
+                          </div>
+                        </TableCell>
                         <TableCell>{info.numeroEmploye}</TableCell>
                         <TableCell>{info.adresse}</TableCell>
                         <TableCell>{info.numeroAssurance}</TableCell>
@@ -364,7 +391,7 @@ export default function InformationsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center h-24">
+                      <TableCell colSpan={8} className="text-center h-24">
                         Aucune information trouvée
                       </TableCell>
                     </TableRow>
@@ -387,6 +414,36 @@ export default function InformationsPage() {
           </DialogHeader>
           <form onSubmit={handleCreateSubmit}>
             <div className="grid gap-4 py-4">
+              {/* Sélection de l'utilisateur */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="utilisateur" className="text-right">
+                  Employé
+                </Label>
+                <div className="col-span-3">
+                  <Select 
+                    value={formData.utilisateurId} 
+                    onValueChange={handleUtilisateurChange}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un employé" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingUtilisateurs ? (
+                        <SelectItem value="" disabled>Chargement...</SelectItem>
+                      ) : utilisateursData?.utilisateurs?.length > 0 ? (
+                        utilisateursData.utilisateurs.map((user) => (
+                          <SelectItem key={user.utilisateurId} value={user.utilisateurId}>
+                            {user.prenom} {user.nom} ({user.email})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>Aucun utilisateur disponible</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="numeroEmploye" className="text-right">
                   N° Employé
@@ -439,7 +496,6 @@ export default function InformationsPage() {
                   required
                 />
               </div>
-              {/* Nouveau champ pour l'email de notification */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="emailNotification" className="text-right">
                   Email notification
@@ -494,6 +550,36 @@ export default function InformationsPage() {
           </DialogHeader>
           <form onSubmit={handleEditSubmit}>
             <div className="grid gap-4 py-4">
+              {/* Sélection de l'utilisateur dans le formulaire d'édition */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="utilisateur-edit" className="text-right">
+                  Employé
+                </Label>
+                <div className="col-span-3">
+                  <Select 
+                    value={formData.utilisateurId} 
+                    onValueChange={handleUtilisateurChange}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un employé" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingUtilisateurs ? (
+                        <SelectItem value="" disabled>Chargement...</SelectItem>
+                      ) : utilisateursData?.utilisateurs?.length > 0 ? (
+                        utilisateursData.utilisateurs.map((user) => (
+                          <SelectItem key={user.utilisateurId} value={user.utilisateurId}>
+                            {user.prenom} {user.nom} ({user.email})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>Aucun utilisateur disponible</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="numeroEmploye" className="text-right">
                   N° Employé
@@ -546,7 +632,6 @@ export default function InformationsPage() {
                   required
                 />
               </div>
-              {/* Nouveau champ pour l'email de notification dans le formulaire d'édition */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="emailNotification-edit" className="text-right">
                   Email notification
