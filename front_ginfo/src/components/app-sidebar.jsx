@@ -62,7 +62,7 @@ const data = {
       items: [
         {
           title: "Utilisateurs",
-          url: "#",
+          url: "/utilisateurs",
           icon: <Users className="size-4 mr-2" />
         },
         {

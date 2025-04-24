@@ -63,6 +63,8 @@ class LoginMutation(graphene.Mutation):
         
         # Ajouter l'ID utilisateur au payload du token
         refresh['utilisateurId'] = profile.utilisateur_id
+        #Ajout de role dans le token 
+        refresh['role'] = profile.role
         
         return LoginMutation(
             success=True,
