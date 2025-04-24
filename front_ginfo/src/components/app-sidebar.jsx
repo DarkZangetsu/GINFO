@@ -77,7 +77,7 @@ const data = {
         },
         {
           title: "Historiques",
-          url: "",
+          url: "/historiques",
           icon: <HistoryIcon className="size-4 mr-2" />
         },
         {
