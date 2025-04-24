@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { gql } from "@apollo/client";
@@ -47,32 +46,29 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast, Toaster } from "sonner";
-import { PlusCircle, Pencil, Trash2, Check, X } from "lucide-react";
+import { PlusCircle, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
-import { CREATE_INFORMATION, DELETE_INFORMATION, GET_INFORMATIONS, UPDATE_INFORMATION } from "@/query/information";
+import { CREATE_COMPAGNIE, DELETE_COMPAGNIE, GET_COMPAGNIES, UPDATE_COMPAGNIE } from "@/query/compagnie";
 
 
-export default function InformationsPage() {
+export default function CompagniesAssurancePage() {
   const router = useRouter();
-  const { data, loading, error, refetch } = useQuery(GET_INFORMATIONS);
-  const [createInformation] = useMutation(CREATE_INFORMATION);
-  const [updateInformation] = useMutation(UPDATE_INFORMATION);
-  const [deleteInformation] = useMutation(DELETE_INFORMATION);
+  const { data, loading, error, refetch } = useQuery(GET_COMPAGNIES);
+  const [createCompagnie] = useMutation(CREATE_COMPAGNIE);
+  const [updateCompagnie] = useMutation(UPDATE_COMPAGNIE);
+  const [deleteCompagnie] = useMutation(DELETE_COMPAGNIE);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [currentInformation, setCurrentInformation] = useState(null);
+  const [currentCompagnie, setCurrentCompagnie] = useState(null);
   const [userId, setUserId] = useState(null);
   const [formData, setFormData] = useState({
-    numeroEmploye: "",
-    adresse: "",
-    numeroAssurance: "",
-    cin: "",
-    statut: false 
+    nomCompagnie: "",
+    adresseCompagnie: "",
+    emailCompagnie: ""
   });
 
   useEffect(() => {
@@ -106,37 +102,28 @@ export default function InformationsPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleStatusChange = (checked) => {
-    setFormData(prev => ({ ...prev, statut: checked }));
-  };
-
-
   const openCreateModal = () => {
     setFormData({
-      numeroEmploye: "",
-      adresse: "",
-      numeroAssurance: "",
-      cin: "",
-      statut: false 
+      nomCompagnie: "",
+      adresseCompagnie: "",
+      emailCompagnie: ""
     });
     setIsCreateModalOpen(true);
   };
 
-  const openEditModal = (information) => {
-    setCurrentInformation(information);
+  const openEditModal = (compagnie) => {
+    setCurrentCompagnie(compagnie);
     setFormData({
-      numeroEmploye: information.numeroEmploye || "",
-      adresse: information.adresse || "",
-      numeroAssurance: information.numeroAssurance || "",
-      cin: information.cin || "",
-      statut: Boolean(information.statut) 
+      nomCompagnie: compagnie.nomCompagnie || "",
+      adresseCompagnie: compagnie.adresseCompagnie || "",
+      emailCompagnie: compagnie.emailCompagnie || ""
     });
     setIsEditModalOpen(true);
   };
 
   // Ouvrir le dialogue de confirmation de suppression
-  const openDeleteDialog = (information) => {
-    setCurrentInformation(information);
+  const openDeleteDialog = (compagnie) => {
+    setCurrentCompagnie(compagnie);
     setIsDeleteDialogOpen(true);
   };
 
@@ -146,41 +133,36 @@ export default function InformationsPage() {
     
     if (!userId) {
       toast.error("Utilisateur non identifié", {
-        description: "Impossible de créer l'information."
+        description: "Impossible de créer la compagnie d'assurance."
       });
       return;
     }
   
     console.log("FormData avant envoi:", formData);
-    console.log("UserID:", userId);
   
     try {
-      const informationInput = {
-        utilisateurId: userId,
-        numeroEmploye: formData.numeroEmploye,
-        adresse: formData.adresse,
-        numeroAssurance: formData.numeroAssurance,
-        cin: formData.cin,
-        statut: formData.statut
+      const compagnieInput = {
+        nomCompagnie: formData.nomCompagnie,
+        adresseCompagnie: formData.adresseCompagnie,
+        emailCompagnie: formData.emailCompagnie
       };
   
-      console.log("Structure finale envoyée:", informationInput);
+      console.log("Structure finale envoyée:", compagnieInput);
   
-      const response = await createInformation({
+      const response = await createCompagnie({
         variables: {
-          informationData: informationInput
+          compagnieData: compagnieInput
         }
       });
   
       console.log("Réponse de création:", response);
       setIsCreateModalOpen(false);
       refetch();
-      toast.success("Information créée", {
-        description: "L'information a été créée avec succès."
+      toast.success("Compagnie créée", {
+        description: "La compagnie d'assurance a été créée avec succès."
       });
     } catch (error) {
       console.error("Erreur détaillée lors de la création:", error);
-      // Afficher plus de détails sur l'erreur
       const errorMessage = error.graphQLErrors?.[0]?.message || error.message;
       toast.error("Erreur", {
         description: `Une erreur est survenue: ${errorMessage}`
@@ -193,38 +175,35 @@ export default function InformationsPage() {
     
     if (!userId) {
       toast.error("Utilisateur non identifié", {
-        description: "Impossible de modifier l'information."
+        description: "Impossible de modifier la compagnie d'assurance."
       });
       return;
     }
   
     console.log("FormData pour édition:", formData);
-    console.log("Information ID:", currentInformation.informationId);
+    console.log("Compagnie ID:", currentCompagnie.compagnieId);
   
     try {
-      const informationInput = {
-        utilisateurId: userId,
-        numeroEmploye: formData.numeroEmploye,
-        adresse: formData.adresse,
-        numeroAssurance: formData.numeroAssurance,
-        cin: formData.cin,
-        statut: formData.statut
+      const compagnieInput = {
+        nomCompagnie: formData.nomCompagnie,
+        adresseCompagnie: formData.adresseCompagnie,
+        emailCompagnie: formData.emailCompagnie
       };
   
-      console.log("Structure finale pour mise à jour:", informationInput);
+      console.log("Structure finale pour mise à jour:", compagnieInput);
   
-      const response = await updateInformation({
+      const response = await updateCompagnie({
         variables: {
-          id: currentInformation.informationId,
-          informationData: informationInput
+          id: currentCompagnie.compagnieId,
+          compagnieData: compagnieInput
         }
       });
   
       console.log("Réponse de mise à jour:", response);
       setIsEditModalOpen(false);
       refetch();
-      toast.success("Information mise à jour", {
-        description: "L'information a été mise à jour avec succès."
+      toast.success("Compagnie mise à jour", {
+        description: "La compagnie d'assurance a été mise à jour avec succès."
       });
     } catch (error) {
       console.error("Erreur détaillée lors de la mise à jour:", error);
@@ -234,20 +213,19 @@ export default function InformationsPage() {
       });
     }
   };
-  
 
   // Confirmer la suppression
   const handleDelete = async () => {
     try {
-      await deleteInformation({
+      await deleteCompagnie({
         variables: {
-          id: currentInformation.informationId
+          id: currentCompagnie.compagnieId
         }
       });
       setIsDeleteDialogOpen(false);
       refetch();
-      toast.success("Information supprimée", {
-        description: "L'information a été supprimée avec succès."
+      toast.success("Compagnie supprimée", {
+        description: "La compagnie d'assurance a été supprimée avec succès."
       });
     } catch (error) {
       toast.error("Erreur", {
@@ -272,7 +250,7 @@ export default function InformationsPage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Informations</BreadcrumbPage>
+                  <BreadcrumbPage>Compagnies d'assurance</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -280,16 +258,16 @@ export default function InformationsPage() {
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Gestion des Informations</h1>
+            <h1 className="text-2xl font-bold">Gestion des Compagnies d'Assurance</h1>
             <Button onClick={openCreateModal}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Ajouter une information
+              Ajouter une compagnie
             </Button>
           </div>
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              <p>Chargement des informations...</p>
+              <p>Chargement des compagnies d'assurance...</p>
             </div>
           ) : error ? (
             <div className="flex justify-center items-center h-64">
@@ -300,40 +278,24 @@ export default function InformationsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>N° Employé</TableHead>
+                    <TableHead>Nom de la compagnie</TableHead>
                     <TableHead>Adresse</TableHead>
-                    <TableHead>N° Assurance</TableHead>
-                    <TableHead>CIN</TableHead>
-                    <TableHead>Vérifié</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.informations.length > 0 ? (
-                    data.informations.map((info) => (
-                      <TableRow key={info.informationId}>
-                        <TableCell>{info.numeroEmploye}</TableCell>
-                        <TableCell>{info.adresse}</TableCell>
-                        <TableCell>{info.numeroAssurance}</TableCell>
-                        <TableCell>{info.cin}</TableCell>
-                        <TableCell>
-                          {Boolean(info.statut) ? (
-                            <div className="flex items-center">
-                              <Check className="h-5 w-5 text-green-500" />
-                              <span className="ml-2">Oui</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center">
-                              <X className="h-5 w-5 text-red-500" />
-                              <span className="ml-2">Non</span>
-                            </div>
-                          )}
-                        </TableCell>
+                  {data?.compagnies.length > 0 ? (
+                    data.compagnies.map((compagnie) => (
+                      <TableRow key={compagnie.compagnieId}>
+                        <TableCell>{compagnie.nomCompagnie}</TableCell>
+                        <TableCell>{compagnie.adresseCompagnie}</TableCell>
+                        <TableCell>{compagnie.emailCompagnie}</TableCell>
                         <TableCell className="flex justify-end gap-2">
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => openEditModal(info)}
+                            onClick={() => openEditModal(compagnie)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -341,7 +303,7 @@ export default function InformationsPage() {
                             variant="outline"
                             size="icon"
                             className="text-red-500"
-                            onClick={() => openDeleteDialog(info)}
+                            onClick={() => openDeleteDialog(compagnie)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -350,8 +312,8 @@ export default function InformationsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center h-24">
-                        Aucune information trouvée
+                      <TableCell colSpan={4} className="text-center h-24">
+                        Aucune compagnie d'assurance trouvée
                       </TableCell>
                     </TableRow>
                   )}
@@ -366,82 +328,52 @@ export default function InformationsPage() {
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Ajouter une information</DialogTitle>
+            <DialogTitle>Ajouter une compagnie d'assurance</DialogTitle>
             <DialogDescription>
-              Remplissez le formulaire pour ajouter une nouvelle information.
+              Remplissez le formulaire pour ajouter une nouvelle compagnie d'assurance.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="numeroEmploye" className="text-right">
-                  N° Employé
+                <Label htmlFor="nomCompagnie" className="text-right">
+                  Nom de la compagnie
                 </Label>
                 <Input
-                  id="numeroEmploye"
-                  name="numeroEmploye"
-                  value={formData.numeroEmploye}
+                  id="nomCompagnie"
+                  name="nomCompagnie"
+                  value={formData.nomCompagnie}
                   onChange={handleChange}
                   className="col-span-3"
                   required
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="adresse" className="text-right">
+                <Label htmlFor="adresseCompagnie" className="text-right">
                   Adresse
                 </Label>
                 <Input
-                  id="adresse"
-                  name="adresse"
-                  value={formData.adresse}
+                  id="adresseCompagnie"
+                  name="adresseCompagnie"
+                  value={formData.adresseCompagnie}
                   onChange={handleChange}
                   className="col-span-3"
                   required
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="numeroAssurance" className="text-right">
-                  N° Assurance
+                <Label htmlFor="emailCompagnie" className="text-right">
+                  Email
                 </Label>
                 <Input
-                  id="numeroAssurance"
-                  name="numeroAssurance"
-                  value={formData.numeroAssurance}
+                  id="emailCompagnie"
+                  name="emailCompagnie"
+                  type="email"
+                  value={formData.emailCompagnie}
                   onChange={handleChange}
                   className="col-span-3"
                   required
                 />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cin" className="text-right">
-                  CIN
-                </Label>
-                <Input
-                  id="cin"
-                  name="cin"
-                  value={formData.cin}
-                  onChange={handleChange}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="statut" className="text-right">
-                  Vérifié
-                </Label>
-                <div className="flex items-center space-x-2 col-span-3">
-                  <Checkbox 
-                    id="statut" 
-                    checked={formData.statut} 
-                    onCheckedChange={handleStatusChange}
-                  />
-                  <label 
-                    htmlFor="statut" 
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Information vérifiée
-                  </label>
-                </div>
               </div>
             </div>
             <DialogFooter>
@@ -458,82 +390,52 @@ export default function InformationsPage() {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Modifier l'information</DialogTitle>
+            <DialogTitle>Modifier la compagnie d'assurance</DialogTitle>
             <DialogDescription>
-              Modifiez les informations existantes.
+              Modifiez les informations de la compagnie d'assurance.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="numeroEmploye" className="text-right">
-                  N° Employé
+                <Label htmlFor="nomCompagnie" className="text-right">
+                  Nom de la compagnie
                 </Label>
                 <Input
-                  id="numeroEmploye"
-                  name="numeroEmploye"
-                  value={formData.numeroEmploye}
+                  id="nomCompagnie"
+                  name="nomCompagnie"
+                  value={formData.nomCompagnie}
                   onChange={handleChange}
                   className="col-span-3"
                   required
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="adresse" className="text-right">
+                <Label htmlFor="adresseCompagnie" className="text-right">
                   Adresse
                 </Label>
                 <Input
-                  id="adresse"
-                  name="adresse"
-                  value={formData.adresse}
+                  id="adresseCompagnie"
+                  name="adresseCompagnie"
+                  value={formData.adresseCompagnie}
                   onChange={handleChange}
                   className="col-span-3"
                   required
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="numeroAssurance" className="text-right">
-                  N° Assurance
+                <Label htmlFor="emailCompagnie" className="text-right">
+                  Email
                 </Label>
                 <Input
-                  id="numeroAssurance"
-                  name="numeroAssurance"
-                  value={formData.numeroAssurance}
+                  id="emailCompagnie"
+                  name="emailCompagnie"
+                  type="email"
+                  value={formData.emailCompagnie}
                   onChange={handleChange}
                   className="col-span-3"
                   required
                 />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cin" className="text-right">
-                  CIN
-                </Label>
-                <Input
-                  id="cin"
-                  name="cin"
-                  value={formData.cin}
-                  onChange={handleChange}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="statut-edit" className="text-right">
-                  Vérifié
-                </Label>
-                <div className="flex items-center space-x-2 col-span-3">
-                  <Checkbox 
-                    id="statut-edit" 
-                    checked={formData.statut} 
-                    onCheckedChange={handleStatusChange}
-                  />
-                  <label 
-                    htmlFor="statut-edit" 
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Information vérifiée
-                  </label>
-                </div>
               </div>
             </div>
             <DialogFooter>
@@ -552,7 +454,7 @@ export default function InformationsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action ne peut pas être annulée. Cette information sera supprimée définitivement.
+              Cette action ne peut pas être annulée. Cette compagnie d'assurance sera supprimée définitivement.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

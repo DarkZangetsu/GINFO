@@ -1,6 +1,6 @@
 "use client"
 import * as React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useMutation, gql } from "@apollo/client"
 import { toast } from "sonner"
 import { InfoIcon, LayoutDashboard, Users, Bell, FileText, PieChart, LogOut, HistoryIcon, SaveOffIcon, Shield } from "lucide-react"
@@ -82,7 +82,7 @@ const data = {
         },
         {
           title: "Compagnie Assurance",
-          url: "",
+          url: "/compagnies",
           icon: <Shield className="size-4 mr-2" />
         },
       ],
@@ -95,15 +95,17 @@ export function AppSidebar({
 }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [refreshToken, setRefreshToken] = useState("")
   const [logoutMutation] = useMutation(LOGOUT_MUTATION)
+  
+  useEffect(() => {
+    const storedToken = localStorage.getItem("refreshToken") || ""
+    setRefreshToken(storedToken)
+  }, [])
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
     try {
-      // Récupérer le refreshToken depuis le localStorage
-      const refreshToken = localStorage.getItem("refreshToken")
-      
-      // Vérifier si le refreshToken existe
       if (!refreshToken) {
         toast.error("Erreur de déconnexion", {
           description: "Aucun token de rafraîchissement trouvé."
@@ -130,7 +132,9 @@ export function AppSidebar({
         })
         
         setTimeout(() => {
-          document.body.classList.add('fade-out')
+          if (typeof document !== "undefined") {
+            document.body.classList.add('fade-out')
+          }
           setTimeout(() => {
             window.location.href = "/login"
           }, 500)
@@ -153,15 +157,17 @@ export function AppSidebar({
 
   return (
     <>
-      <style jsx global>{`
-        @keyframes fadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
-        }
-        .fade-out {
-          animation: fadeOut 0.5s ease-out forwards;
-        }
-      `}</style>
+      {typeof window !== "undefined" && (
+        <style jsx global>{`
+          @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+          }
+          .fade-out {
+            animation: fadeOut 0.5s ease-out forwards;
+          }
+        `}</style>
+      )}
       
       <Sidebar {...props}>
         <SidebarHeader>
