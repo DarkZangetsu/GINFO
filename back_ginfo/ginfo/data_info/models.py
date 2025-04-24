@@ -2,6 +2,12 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+
 class Utilisateur(models.Model):
     utilisateur_id = models.AutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -35,6 +41,8 @@ class Information(models.Model):
     numero_assurance = models.CharField(max_length=255, null=True, blank=True)
     cin = models.CharField(max_length=255, null=True, blank=True)
     statut = models.BooleanField(null=False)
+ 
+    email_notification = models.EmailField(max_length=255, null=True, blank=True, help_text="Email où envoyer la notification pour cette information")
     
     def __str__(self):
         return f"Info de {self.utilisateur}"
@@ -42,17 +50,14 @@ class Information(models.Model):
     def save(self, *args, **kwargs):
         creation = not self.pk
         
-        # Si c'est une mise à jour, récupére l'état précédent
         if not creation:
             ancien_etat = Information.objects.get(pk=self.pk)
             ancien_statut = ancien_etat.statut
         else:
             ancien_statut = False
             
-        # Enregistrer l'objet
         super().save(*args, **kwargs)
         
-        # Si c'est une création avec statut True ou une mise à jour de False à True
         if (creation and self.statut) or (not creation and not ancien_statut and self.statut):
             self.creer_notification()
     
@@ -60,22 +65,82 @@ class Information(models.Model):
         """Crée une notification lorsqu'une information est ajoutée avec statut True ou passe de False à True"""
         historique = Historique.objects.create(
             type_action="envoye",
-            description=f"Information {self.information_id} confirmé pour l'utilisateur {self.utilisateur}"
+            description=f"Information {self.information_id} confirmée pour l'utilisateur {self.utilisateur}"
         )
         
-        # Créer la notification associée
+        destinataire = self.email_notification if self.email_notification else "Administration"
+        
         notification = Notification.objects.create(
             historique=historique,
             information=self,
             objet="Confirmation d'information",
-            contenu=f"L'information {self.information_id} pour {self.utilisateur} a été confirmé bien à jour",
+            contenu=f"L'information {self.information_id} pour {self.utilisateur} a été confirmée et est maintenant à jour",
             expediteur="Système",
-            destinataire=self.utilisateur.email if self.utilisateur.email else "Administration",
+            destinataire=destinataire,
             date_envoi=timezone.now(),
             statut=True
         )
         
+        if self.email_notification:
+            self.envoyer_email_notification(notification)
+        
         return notification
+    
+    def envoyer_email_notification(self, notification):
+        """Envoie un email de notification à l'adresse email spécifiée"""
+        if not self.email_notification:
+            notification.enregistrer_dans_historique(
+                type_action="email_non_envoyé", 
+                description="Aucune adresse email de notification définie"
+            )
+            return
+        
+        sujet = notification.objet
+        message_html = f"""
+        <html>
+        <head></head>
+        <body>
+            <h2>Confirmation de mise à jour d'information</h2>
+            <p>Bonjour,</p>
+            <p>{notification.contenu}</p>
+            <p>Détails de l'information mise à jour pour {self.utilisateur.prenom} {self.utilisateur.nom}:</p>
+            <ul>
+                <li>Numéro d'employé: {self.numero_employe or 'Non spécifié'}</li>
+                <li>Adresse: {self.adresse or 'Non spécifiée'}</li>
+                <li>Numéro d'assurance: {self.numero_assurance or 'Non spécifié'}</li>
+                <li>CIN: {self.cin or 'Non spécifiée'}</li>
+            </ul>
+            <p>Cordialement,<br>L'équipe RH</p>
+        </body>
+        </html>
+        """
+        message_texte = strip_tags(message_html)
+        
+        try:
+            print(f"Tentative d'envoi d'email à {self.email_notification}")
+            
+            send_mail(
+                subject=sujet,
+                message=message_texte,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[self.email_notification],
+                html_message=message_html,
+                fail_silently=False,  
+            )
+            
+            print(f"Email envoyé avec succès à {self.email_notification}")
+            
+            notification.enregistrer_dans_historique(
+                type_action="email_envoye", 
+                description=f"Email de notification envoyé à {self.email_notification}"
+            )
+            
+        except Exception as e:
+            print(f"ERREUR d'envoi d'email: {str(e)}")
+            notification.enregistrer_dans_historique(
+                type_action="email_echec", 
+                description=f"Échec de l'envoi d'email: {str(e)}"
+            )
 
 
 class Historique(models.Model):

@@ -49,7 +49,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast, Toaster } from "sonner";
-import { PlusCircle, Pencil, Trash2, Check, X } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Check, X, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { CREATE_INFORMATION, DELETE_INFORMATION, GET_INFORMATIONS, UPDATE_INFORMATION } from "@/query/information";
@@ -72,6 +72,7 @@ export default function InformationsPage() {
     adresse: "",
     numeroAssurance: "",
     cin: "",
+    emailNotification: "", // Nouveau champ pour l'email de notification
     statut: false 
   });
 
@@ -117,6 +118,7 @@ export default function InformationsPage() {
       adresse: "",
       numeroAssurance: "",
       cin: "",
+      emailNotification: "", // Réinitialiser l'email de notification
       statut: false 
     });
     setIsCreateModalOpen(true);
@@ -129,6 +131,7 @@ export default function InformationsPage() {
       adresse: information.adresse || "",
       numeroAssurance: information.numeroAssurance || "",
       cin: information.cin || "",
+      emailNotification: information.emailNotification || "", // Récupérer l'email de notification existant
       statut: Boolean(information.statut) 
     });
     setIsEditModalOpen(true);
@@ -161,6 +164,7 @@ export default function InformationsPage() {
         adresse: formData.adresse,
         numeroAssurance: formData.numeroAssurance,
         cin: formData.cin,
+        emailNotification: formData.emailNotification, // Inclure l'email de notification
         statut: formData.statut
       };
   
@@ -180,7 +184,6 @@ export default function InformationsPage() {
       });
     } catch (error) {
       console.error("Erreur détaillée lors de la création:", error);
-      // Afficher plus de détails sur l'erreur
       const errorMessage = error.graphQLErrors?.[0]?.message || error.message;
       toast.error("Erreur", {
         description: `Une erreur est survenue: ${errorMessage}`
@@ -208,7 +211,7 @@ export default function InformationsPage() {
         adresse: formData.adresse,
         numeroAssurance: formData.numeroAssurance,
         cin: formData.cin,
-        statut: formData.statut
+        emailNotification: formData.emailNotification, 
       };
   
       console.log("Structure finale pour mise à jour:", informationInput);
@@ -304,6 +307,7 @@ export default function InformationsPage() {
                     <TableHead>Adresse</TableHead>
                     <TableHead>N° Assurance</TableHead>
                     <TableHead>CIN</TableHead>
+                    <TableHead>Email notification</TableHead>
                     <TableHead>Vérifié</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -316,6 +320,16 @@ export default function InformationsPage() {
                         <TableCell>{info.adresse}</TableCell>
                         <TableCell>{info.numeroAssurance}</TableCell>
                         <TableCell>{info.cin}</TableCell>
+                        <TableCell>
+                          {info.emailNotification ? (
+                            <div className="flex items-center">
+                              <Mail className="h-4 w-4 mr-2 text-blue-500" />
+                              {info.emailNotification}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">Non défini</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           {Boolean(info.statut) ? (
                             <div className="flex items-center">
@@ -350,7 +364,7 @@ export default function InformationsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center h-24">
+                      <TableCell colSpan={7} className="text-center h-24">
                         Aucune information trouvée
                       </TableCell>
                     </TableRow>
@@ -423,6 +437,21 @@ export default function InformationsPage() {
                   onChange={handleChange}
                   className="col-span-3"
                   required
+                />
+              </div>
+              {/* Nouveau champ pour l'email de notification */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="emailNotification" className="text-right">
+                  Email notification
+                </Label>
+                <Input
+                  id="emailNotification"
+                  name="emailNotification"
+                  type="email"
+                  placeholder="email@example.com"
+                  value={formData.emailNotification}
+                  onChange={handleChange}
+                  className="col-span-3"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -515,6 +544,21 @@ export default function InformationsPage() {
                   onChange={handleChange}
                   className="col-span-3"
                   required
+                />
+              </div>
+              {/* Nouveau champ pour l'email de notification dans le formulaire d'édition */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="emailNotification-edit" className="text-right">
+                  Email notification
+                </Label>
+                <Input
+                  id="emailNotification-edit"
+                  name="emailNotification"
+                  type="email"
+                  placeholder="email@example.com"
+                  value={formData.emailNotification}
+                  onChange={handleChange}
+                  className="col-span-3"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">

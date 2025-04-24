@@ -205,19 +205,25 @@ class CreateInformation(graphene.Mutation):
     
     @staticmethod
     def mutate(root, info, information_data):
-        utilisateur = Utilisateur.objects.get(pk=information_data.utilisateur_id)
-        information = Information(
-            information_id=information_data.information_id,
-            utilisateur=utilisateur,
-            numero_employe=information_data.numero_employe,
-            adresse=information_data.adresse,
-            numero_assurance=information_data.numero_assurance,
-            cin=information_data.cin,
-            statut=information_data.statut
-        )
-        information.save()
-        
-        return CreateInformation(information=information)
+        try:
+            utilisateur = Utilisateur.objects.get(pk=information_data.utilisateur_id)
+            
+            information = Information(
+                utilisateur=utilisateur,
+                numero_employe=information_data.numero_employe,
+                adresse=information_data.adresse,
+                numero_assurance=information_data.numero_assurance,
+                cin=information_data.cin,
+                statut=information_data.statut,
+                email_notification=information_data.email_notification
+            )
+            information.save()
+            
+            return CreateInformation(information=information)
+        except Utilisateur.DoesNotExist:
+            raise GraphQLError("Utilisateur non trouvé")
+        except Exception as e:
+            raise GraphQLError(f"Erreur lors de la création de l'information: {str(e)}")
 
 class CreateHistorique(graphene.Mutation):
     class Arguments:
@@ -320,26 +326,31 @@ class UpdateUtilisateur(graphene.Mutation):
 class UpdateInformation(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
-        informationData = InformationInput(required=True)
+        information_data = InformationInput(required=True)
 
     information = graphene.Field(InformationType)
 
     @staticmethod
-    def mutate(root, info, id, informationData):
+    def mutate(root, info, id, information_data):
         try:
             information = Information.objects.get(information_id=id)
         except Information.DoesNotExist:
             raise GraphQLError("Information non trouvée")
-        if 'numeroEmploye' in informationData:
-            information.numero_employe = informationData.get('numeroEmploye')
-        if 'adresse' in informationData:
-            information.adresse = informationData.get('adresse')
-        if 'numeroAssurance' in informationData:
-            information.numero_assurance = informationData.get('numeroAssurance')
-        if 'cin' in informationData:
-            information.cin = informationData.get('cin')
-        if 'statut' in informationData:
-            information.statut = informationData.get('statut')
+            
+        # Accès aux attributs de l'objet information_data
+        if hasattr(information_data, 'numero_employe') and information_data.numero_employe is not None:
+            information.numero_employe = information_data.numero_employe
+        if hasattr(information_data, 'adresse') and information_data.adresse is not None:
+            information.adresse = information_data.adresse
+        if hasattr(information_data, 'numero_assurance') and information_data.numero_assurance is not None:
+            information.numero_assurance = information_data.numero_assurance
+        if hasattr(information_data, 'cin') and information_data.cin is not None:
+            information.cin = information_data.cin
+        if hasattr(information_data, 'statut') and information_data.statut is not None:
+            information.statut = information_data.statut
+        if hasattr(information_data, 'email_notification') and information_data.email_notification is not None:
+            information.email_notification = information_data.email_notification
+            
         information.save()
         
         return UpdateInformation(information=information)

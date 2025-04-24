@@ -18,6 +18,7 @@ class InformationInput(graphene.InputObjectType):
     numero_assurance = graphene.String()
     cin = graphene.String()
     statut = graphene.Boolean(required=True)
+    email_notification = graphene.String()
 
 class HistoriqueInput(graphene.InputObjectType):
     historique_id = graphene.Int(required=True)

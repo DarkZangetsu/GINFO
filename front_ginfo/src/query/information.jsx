@@ -9,6 +9,7 @@ export const GET_INFORMATIONS = gql`
       numeroAssurance
       cin
       statut
+      emailNotification
     }
   }
 `;
@@ -22,6 +23,7 @@ export const GET_INFORMATION_BY_ID = gql`
       numeroAssurance
       cin
       statut
+      emailNotification
     }
   }
 `;
@@ -36,6 +38,7 @@ export const CREATE_INFORMATION = gql`
         numeroAssurance
         cin
         statut
+        emailNotification
       }
     }
   }
@@ -51,6 +54,7 @@ export const UPDATE_INFORMATION = gql`
         numeroAssurance
         cin
         statut
+        emailNotification
       }
     }
   }
