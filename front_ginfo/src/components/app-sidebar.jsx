@@ -67,7 +67,7 @@ const data = {
         },
         {
           title: "Notifications",
-          url: "",
+          url: "/notifications",
           icon: <Bell className="size-4 mr-2" />
         },
         {
