@@ -125,7 +125,6 @@ export default function InformationsPage() {
   const [updateInformation] = useMutation(UPDATE_INFORMATION);
   const [deleteInformation] = useMutation(DELETE_INFORMATION);
 
-  // États pour gérer les dialogues et modales
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -152,9 +151,8 @@ export default function InformationsPage() {
     }
 
     try {
-      // Décoder le token pour récupérer l'ID de l'utilisateur
       const decoded = jwtDecode(token);
-      setUserId(decoded.userId || decoded.sub || decoded.id);
+      setUserId(decoded.utilisateurId || decoded.sub || decoded.id);
     } catch (error) {
       console.error("Erreur lors du décodage du token:", error);
       toast.error("Session invalide", {
@@ -187,7 +185,6 @@ export default function InformationsPage() {
     setIsCreateModalOpen(true);
   };
 
-  // Ouvrir le modal d'édition
   const openEditModal = (information) => {
     setCurrentInformation(information);
     setFormData({
@@ -217,12 +214,10 @@ export default function InformationsPage() {
       return;
     }
   
-    // Ajoutez des logs pour voir ce qui est envoyé
     console.log("FormData avant envoi:", formData);
     console.log("UserID:", userId);
   
     try {
-      // Structure exactement comme dans votre exemple Postman qui fonctionne
       const informationInput = {
         utilisateurId: userId,
         numeroEmploye: formData.numeroEmploye,

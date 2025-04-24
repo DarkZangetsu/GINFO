@@ -6,13 +6,11 @@ from graphql import GraphQLError
 from django.contrib.auth import authenticate
 from graphql import GraphQLError
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 from .input import CompagnieAssuranceInput, HistoriqueInput, InformationInput, NotificationInput, UtilisateurInput
 
 from .models import Utilisateur, Information, Historique, Notification, Compagnie_Assurance
 from .djangoObjectType import CompagnieAssuranceType, HistoriqueType, InformationType, NotificationType, UtilisateurType
-
 
 class LoginMutation(graphene.Mutation):
     class Arguments:
@@ -60,8 +58,11 @@ class LoginMutation(graphene.Mutation):
                 utilisateur=None
             )
         
-        # Générer les tokens JWT
+        # Générer les tokens JWT avec l'ID utilisateur personnalisé
         refresh = RefreshToken.for_user(user)
+        
+        # Ajouter l'ID utilisateur au payload du token
+        refresh['utilisateurId'] = profile.utilisateur_id
         
         return LoginMutation(
             success=True,
@@ -317,37 +318,29 @@ class UpdateUtilisateur(graphene.Mutation):
 class UpdateInformation(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
-        information_data = InformationInput(required=True)
-        
+        informationData = InformationInput(required=True)
+
     information = graphene.Field(InformationType)
-    
+
     @staticmethod
-    def mutate(root, info, id, information_data):
+    def mutate(root, info, id, informationData):
         try:
-            information = Information.objects.get(pk=id)
-            
-            # Mettre à jour les champs
-            if hasattr(information_data, 'information_id'):
-                information.information_id = information_data.information_id
-            if hasattr(information_data, 'utilisateur_id'):
-                utilisateur = Utilisateur.objects.get(pk=information_data.utilisateur_id)
-                information.utilisateur = utilisateur
-            if hasattr(information_data, 'numero_employe'):
-                information.numero_employe = information_data.numero_employe
-            if hasattr(information_data, 'adresse'):
-                information.adresse = information_data.adresse
-            if hasattr(information_data, 'numero_assurance'):
-                information.numero_assurance = information_data.numero_assurance
-            if hasattr(information_data, 'ciin'):
-                information.ciin = information_data.ciin
-            if hasattr(information_data, 'statut'):
-                information.statut = information_data.statut
-                
-            information.save()
-            
-            return UpdateInformation(information=information)
+            information = Information.objects.get(information_id=id)
         except Information.DoesNotExist:
-            raise GraphQLError(f"Information avec ID {id} n'existe pas")
+            raise GraphQLError("Information non trouvée")
+        if 'numeroEmploye' in informationData:
+            information.numero_employe = informationData.get('numeroEmploye')
+        if 'adresse' in informationData:
+            information.adresse = informationData.get('adresse')
+        if 'numeroAssurance' in informationData:
+            information.numero_assurance = informationData.get('numeroAssurance')
+        if 'cin' in informationData:
+            information.cin = informationData.get('cin')
+        if 'statut' in informationData:
+            information.statut = informationData.get('statut')
+        information.save()
+        
+        return UpdateInformation(information=information)
 
 class UpdateCompagnieAssurance(graphene.Mutation):
     class Arguments:
