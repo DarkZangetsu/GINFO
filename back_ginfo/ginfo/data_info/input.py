@@ -16,7 +16,7 @@ class InformationInput(graphene.InputObjectType):
     numero_employe = graphene.String()
     adresse = graphene.String()
     numero_assurance = graphene.String()
-    ciin = graphene.String()
+    cin = graphene.String()
     statut = graphene.Boolean(required=True)
 
 class HistoriqueInput(graphene.InputObjectType):

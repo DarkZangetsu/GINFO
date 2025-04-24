@@ -204,15 +204,13 @@ export function AppSidebar({
         <SidebarFooter className="border-t pt-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton 
+              <div 
                 onClick={() => setShowLogoutDialog(true)}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                className="flex w-full cursor-pointer px-3 py-2 text-red-500 hover:text-red-600 hover:bg-red-50"
               >
-                <button className="flex items-center w-full">
-                  <LogOut className="size-4 mr-2" />
-                  Se déconnecter
-                </button>
-              </SidebarMenuButton>
+                <LogOut className="size-4 mr-2" />
+                <span>Se déconnecter</span>
+              </div>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>

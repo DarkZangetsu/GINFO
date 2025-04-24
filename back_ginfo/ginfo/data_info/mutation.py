@@ -209,7 +209,7 @@ class CreateInformation(graphene.Mutation):
             numero_employe=information_data.numero_employe,
             adresse=information_data.adresse,
             numero_assurance=information_data.numero_assurance,
-            ciin=information_data.ciin,
+            cin=information_data.cin,
             statut=information_data.statut
         )
         information.save()
