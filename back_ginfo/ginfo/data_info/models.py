@@ -32,6 +32,17 @@ class Utilisateur(models.Model):
         super().save(*args, **kwargs) 
 
 
+class Compagnie_Assurance(models.Model):
+    compagnie_id = models.AutoField(primary_key=True)
+    nom_compagnie = models.CharField(max_length=255, null=True, blank=True)
+    adresse_compagnie = models.CharField(max_length=255, null=True, blank=True)
+    email_compagnie = models.CharField(max_length=255, null=True, blank=True)
+    notifications = models.ManyToManyField('Notification', related_name='compagnies_assurance', blank=True)
+    
+    def __str__(self):
+        return self.nom_compagnie if self.nom_compagnie else f"Compagnie {self.pk}"
+
+
 class Information(models.Model):
     information_id = models.AutoField(primary_key=True)
     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='informations')
@@ -40,7 +51,8 @@ class Information(models.Model):
     numero_assurance = models.CharField(max_length=255, null=True, blank=True)
     cin = models.CharField(max_length=255, null=True, blank=True)
     statut = models.BooleanField(null=False)
- 
+    # Nouvelle relation avec Compagnie_Assurance
+    compagnie_assurance = models.ForeignKey(Compagnie_Assurance, on_delete=models.SET_NULL, null=True, blank=True, related_name='informations')
     email_notification = models.EmailField(max_length=255, null=True, blank=True, help_text="Email où envoyer la notification pour cette information")
     
     def __str__(self):
@@ -80,14 +92,26 @@ class Information(models.Model):
             statut=True
         )
         
+        # Associer la notification à la compagnie d'assurance si elle existe
+        if self.compagnie_assurance:
+            self.compagnie_assurance.notifications.add(notification)
+        
+        email_recipients = []
         if self.email_notification:
-            self.envoyer_email_notification(notification)
+            email_recipients.append(self.email_notification)
+        
+        # Ajouter l'email de la compagnie d'assurance s'il existe
+        if self.compagnie_assurance and self.compagnie_assurance.email_compagnie:
+            email_recipients.append(self.compagnie_assurance.email_compagnie)
+        
+        if email_recipients:
+            self.envoyer_email_notification(notification, email_recipients)
         
         return notification
     
-    def envoyer_email_notification(self, notification):
-        """Envoie un email de notification à l'adresse email spécifiée"""
-        if not self.email_notification:
+    def envoyer_email_notification(self, notification, recipients):
+        """Envoie un email de notification à l'adresse email spécifiée et à la compagnie d'assurance"""
+        if not recipients:
             notification.enregistrer_dans_historique(
                 type_action="email_non_envoyé", 
                 description="Aucune adresse email de notification définie"
@@ -116,22 +140,22 @@ class Information(models.Model):
         message_texte = strip_tags(message_html)
         
         try:
-            print(f"Tentative d'envoi d'email à {self.email_notification}")
+            print(f"Tentative d'envoi d'email à {', '.join(recipients)}")
             
             send_mail(
                 subject=sujet,
                 message=message_texte,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[self.email_notification],
+                recipient_list=recipients,
                 html_message=message_html,
                 fail_silently=False,  
             )
             
-            print(f"Email envoyé avec succès à {self.email_notification}")
+            print(f"Email envoyé avec succès à {', '.join(recipients)}")
             
             notification.enregistrer_dans_historique(
                 type_action="email_envoye", 
-                description=f"Email de notification envoyé à {self.email_notification}"
+                description=f"Email de notification envoyé à {', '.join(recipients)}"
             )
             
         except Exception as e:
@@ -184,14 +208,3 @@ class Notification(models.Model):
             self.historique.type_action = type_action
             self.historique.description = description
             self.historique.save()
-
-
-class Compagnie_Assurance(models.Model):
-    compagnie_id = models.AutoField(primary_key=True)
-    nom_compagnie = models.CharField(max_length=255, null=True, blank=True)
-    adresse_compagnie = models.CharField(max_length=255, null=True, blank=True)
-    email_compagnie = models.CharField(max_length=255, null=True, blank=True)
-    notifications = models.ManyToManyField(Notification, related_name='compagnies_assurance')
-    
-    def __str__(self):
-        return self.nom_compagnie if self.nom_compagnie else f"Compagnie {self.pk}"
