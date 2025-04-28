@@ -55,18 +55,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast, Toaster } from "sonner";
-import { PlusCircle, Pencil, Trash2, Check, X, Mail, User } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Check, X, Mail, User, Building, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { CREATE_INFORMATION, DELETE_INFORMATION, GET_INFORMATIONS, UPDATE_INFORMATION } from "@/query/information";
 
-import {  GET_UTILISATEURS  } from "@/query/utilisateur";
+import { GET_UTILISATEURS } from "@/query/utilisateur";
+import { GET_COMPAGNIES } from "@/query/compagnie";
 
 export default function InformationsPage() {
   const router = useRouter();
   const { data, loading, error, refetch } = useQuery(GET_INFORMATIONS);
   const { data: utilisateursData, loading: loadingUtilisateurs } = useQuery(GET_UTILISATEURS);
-  
+  const { data: compagnieData, loading: loadingCompagnie } = useQuery(GET_COMPAGNIES);
+
   const [createInformation] = useMutation(CREATE_INFORMATION);
   const [updateInformation] = useMutation(UPDATE_INFORMATION);
   const [deleteInformation] = useMutation(DELETE_INFORMATION);
@@ -76,14 +78,24 @@ export default function InformationsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentInformation, setCurrentInformation] = useState(null);
   const [userId, setUserId] = useState(null);
+
+  // Formdata avec les noms de champs correspondant au backend
   const [formData, setFormData] = useState({
-    utilisateurId: "", // Ajout de l'ID de l'utilisateur sélectionné
+    utilisateurId: "",
+    compagnieId: "", // Renommé pour correspondre à l'API
     numeroEmploye: "",
     adresse: "",
     numeroAssurance: "",
     cin: "",
     emailNotification: "",
-    statut: false 
+    statut: false
+  });
+
+  // État pour stocker les détails de l'employé actuel en mode édition
+  const [currentEmploye, setCurrentEmploye] = useState({
+    nom: "",
+    prenom: "",
+    email: ""
   });
 
   useEffect(() => {
@@ -122,34 +134,57 @@ export default function InformationsPage() {
     setFormData(prev => ({ ...prev, utilisateurId: value }));
   };
 
+  // Gestionnaire pour le changement de compagnie dans le Select
+  const handleCompagnieChange = (value) => {
+    setFormData(prev => ({ ...prev, compagnieId: value })); // Modifié ici
+  };
+
   const handleStatusChange = (checked) => {
     setFormData(prev => ({ ...prev, statut: checked }));
   };
 
   const openCreateModal = () => {
     setFormData({
-      utilisateurId: "", // Réinitialiser l'ID de l'utilisateur
+      utilisateurId: "",
+      compagnieId: "", // Modifié ici
       numeroEmploye: "",
       adresse: "",
       numeroAssurance: "",
       cin: "",
       emailNotification: "",
-      statut: false 
+      statut: false
     });
     setIsCreateModalOpen(true);
   };
 
   const openEditModal = (information) => {
     setCurrentInformation(information);
+
+    console.log("Structure information:", information);
+
+    const compagnieId = information.compagnieId ?
+      (typeof information.compagnieId === 'object' ?
+        information.compagnieId.compagnieId : information.compagnieId) : "";
+
     setFormData({
-      utilisateurId: information.utilisateur?.utilisateurId || "", // Récupérer l'ID de l'utilisateur associé
+      utilisateurId: information.utilisateur?.utilisateurId || "",
+      compagnieId: compagnieId,
       numeroEmploye: information.numeroEmploye || "",
       adresse: information.adresse || "",
       numeroAssurance: information.numeroAssurance || "",
       cin: information.cin || "",
       emailNotification: information.emailNotification || "",
-      statut: Boolean(information.statut) 
+      statut: Boolean(information.statut)
     });
+
+    if (information.utilisateur) {
+      setCurrentEmploye({
+        nom: information.utilisateur.nom || "",
+        prenom: information.utilisateur.prenom || "",
+        email: information.utilisateur.email || ""
+      });
+    }
+
     setIsEditModalOpen(true);
   };
 
@@ -160,19 +195,18 @@ export default function InformationsPage() {
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.utilisateurId) {
       toast.error("Erreur", {
         description: "Veuillez sélectionner un utilisateur."
       });
       return;
     }
-  
-    console.log("FormData avant envoi:", formData);
-  
+
     try {
       const informationInput = {
-        utilisateurId: formData.utilisateurId, // Utiliser l'ID de l'utilisateur sélectionné, pas celui connecté
+        utilisateurId: formData.utilisateurId,
+        compagnieId: formData.compagnieId,
         numeroEmploye: formData.numeroEmploye,
         adresse: formData.adresse,
         numeroAssurance: formData.numeroAssurance,
@@ -180,16 +214,13 @@ export default function InformationsPage() {
         emailNotification: formData.emailNotification,
         statut: formData.statut
       };
-  
-      console.log("Structure finale envoyée:", informationInput);
-  
+
       const response = await createInformation({
         variables: {
           informationData: informationInput
         }
       });
-  
-      console.log("Réponse de création:", response);
+
       setIsCreateModalOpen(false);
       refetch();
       toast.success("Information créée", {
@@ -206,20 +237,18 @@ export default function InformationsPage() {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.utilisateurId) {
       toast.error("Erreur", {
-        description: "Veuillez sélectionner un utilisateur."
+        description: "L'identifiant de l'utilisateur est manquant."
       });
       return;
     }
-  
-    console.log("FormData pour édition:", formData);
-    console.log("Information ID:", currentInformation.informationId);
-  
+
     try {
       const informationInput = {
         utilisateurId: formData.utilisateurId,
+        compagnieId: formData.compagnieId,
         numeroEmploye: formData.numeroEmploye,
         adresse: formData.adresse,
         numeroAssurance: formData.numeroAssurance,
@@ -227,17 +256,14 @@ export default function InformationsPage() {
         emailNotification: formData.emailNotification,
         statut: formData.statut
       };
-  
-      console.log("Structure finale pour mise à jour:", informationInput);
-  
+
       const response = await updateInformation({
         variables: {
           id: currentInformation.informationId,
           informationData: informationInput
         }
       });
-  
-      console.log("Réponse de mise à jour:", response);
+
       setIsEditModalOpen(false);
       refetch();
       toast.success("Information mise à jour", {
@@ -270,14 +296,6 @@ export default function InformationsPage() {
       });
       console.error("Erreur lors de la suppression:", error);
     }
-  };
-
-  // Fonction pour obtenir le nom complet d'un utilisateur
-  const getUserFullName = (utilisateurId) => {
-    if (!utilisateursData || !utilisateursData.utilisateurs) return "Inconnu";
-    
-    const utilisateur = utilisateursData.utilisateurs.find(u => u.utilisateurId === utilisateurId);
-    return utilisateur ? `${utilisateur.prenom} ${utilisateur.nom}` : "Inconnu";
   };
 
   return (
@@ -326,6 +344,7 @@ export default function InformationsPage() {
                     <TableHead>Employé</TableHead>
                     <TableHead>N° Employé</TableHead>
                     <TableHead>Adresse</TableHead>
+                    <TableHead>Compagnie d'Assurance</TableHead>
                     <TableHead>N° Assurance</TableHead>
                     <TableHead>CIN</TableHead>
                     <TableHead>Email notification</TableHead>
@@ -345,6 +364,12 @@ export default function InformationsPage() {
                         </TableCell>
                         <TableCell>{info.numeroEmploye}</TableCell>
                         <TableCell>{info.adresse}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <Building className="h-4 w-4 mr-2 text-gray-500" />
+                            {info.compagnieId ? info.compagnieId.nom : "Non définie"}
+                          </div>
+                        </TableCell>
                         <TableCell>{info.numeroAssurance}</TableCell>
                         <TableCell>{info.cin}</TableCell>
                         <TableCell>
@@ -391,7 +416,7 @@ export default function InformationsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center h-24">
+                      <TableCell colSpan={9} className="text-center h-24">
                         Aucune information trouvée
                       </TableCell>
                     </TableRow>
@@ -420,25 +445,24 @@ export default function InformationsPage() {
                   Employé
                 </Label>
                 <div className="col-span-3">
-                  <Select 
-                    value={formData.utilisateurId} 
-                    onValueChange={handleUtilisateurChange}
-                    required
+                  <Select
+                    value={formData.compagnieId || ""}
+                    onValueChange={handleCompagnieChange}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un employé" />
+                      <SelectValue placeholder="Sélectionner une compagnie" />
                     </SelectTrigger>
                     <SelectContent>
-                      {loadingUtilisateurs ? (
+                      {loadingCompagnie ? (
                         <SelectItem value="" disabled>Chargement...</SelectItem>
-                      ) : utilisateursData?.utilisateurs?.length > 0 ? (
-                        utilisateursData.utilisateurs.map((user) => (
-                          <SelectItem key={user.utilisateurId} value={user.utilisateurId}>
-                            {user.prenom} {user.nom} ({user.email})
+                      ) : compagnieData?.compagnies?.length > 0 ? (
+                        compagnieData.compagnies.map((compagnie) => (
+                          <SelectItem key={compagnie.compagnieId} value={compagnie.compagnieId}>
+                            {compagnie.nomCompagnie || compagnie.nom}
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>Aucun utilisateur disponible</SelectItem>
+                        <SelectItem value="" disabled>Aucune compagnie disponible</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
@@ -469,6 +493,35 @@ export default function InformationsPage() {
                   className="col-span-3"
                   required
                 />
+              </div>
+              {/* Sélection de la compagnie d'assurance */}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="compagnie" className="text-right">
+                  Compagnie d'Assurance
+                </Label>
+                <div className="col-span-3">
+                  <Select
+                    value={formData.compagnieId}
+                    onValueChange={handleCompagnieChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une compagnie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingCompagnie ? (
+                        <SelectItem value="" disabled>Chargement...</SelectItem>
+                      ) : compagnieData?.compagnies?.length > 0 ? (
+                        compagnieData.compagnies.map((compagnie) => (
+                          <SelectItem key={compagnie.compagnieId} value={compagnie.compagnieId}>
+                            {compagnie.nomCompagnie || compagnie.nom}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>Aucune compagnie disponible</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="numeroAssurance" className="text-right">
@@ -515,13 +568,13 @@ export default function InformationsPage() {
                   Vérifié
                 </Label>
                 <div className="flex items-center space-x-2 col-span-3">
-                  <Checkbox 
-                    id="statut" 
-                    checked={formData.statut} 
+                  <Checkbox
+                    id="statut"
+                    checked={formData.statut}
                     onCheckedChange={handleStatusChange}
                   />
-                  <label 
-                    htmlFor="statut" 
+                  <label
+                    htmlFor="statut"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
                     Information vérifiée
@@ -550,42 +603,32 @@ export default function InformationsPage() {
           </DialogHeader>
           <form onSubmit={handleEditSubmit}>
             <div className="grid gap-4 py-4">
-              {/* Sélection de l'utilisateur dans le formulaire d'édition */}
+              {/* Affichage de l'employé non modifiable */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="utilisateur-edit" className="text-right">
+                <Label htmlFor="utilisateur-display" className="text-right">
                   Employé
                 </Label>
                 <div className="col-span-3">
-                  <Select 
-                    value={formData.utilisateurId} 
-                    onValueChange={handleUtilisateurChange}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un employé" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingUtilisateurs ? (
-                        <SelectItem value="" disabled>Chargement...</SelectItem>
-                      ) : utilisateursData?.utilisateurs?.length > 0 ? (
-                        utilisateursData.utilisateurs.map((user) => (
-                          <SelectItem key={user.utilisateurId} value={user.utilisateurId}>
-                            {user.prenom} {user.nom} ({user.email})
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="" disabled>Aucun utilisateur disponible</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center border rounded-md px-3 py-2 bg-gray-50">
+                    <User className="h-4 w-4 mr-2 text-gray-500" />
+                    {currentEmploye.prenom && currentEmploye.nom ? (
+                      <span className="text-sm">{currentEmploye.prenom} {currentEmploye.nom}</span>
+                    ) : (
+                      <span className="text-sm text-gray-400">Employé non sélectionné</span>
+                    )}
+                    <Lock className="h-4 w-4 ml-2 text-gray-400" />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Ce champ n'est pas modifiable
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="numeroEmploye" className="text-right">
+                <Label htmlFor="numeroEmploye_edit" className="text-right">
                   N° Employé
                 </Label>
                 <Input
-                  id="numeroEmploye"
+                  id="numeroEmploye_edit"
                   name="numeroEmploye"
                   value={formData.numeroEmploye}
                   onChange={handleChange}
@@ -594,11 +637,11 @@ export default function InformationsPage() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="adresse" className="text-right">
+                <Label htmlFor="adresse_edit" className="text-right">
                   Adresse
                 </Label>
                 <Input
-                  id="adresse"
+                  id="adresse_edit"
                   name="adresse"
                   value={formData.adresse}
                   onChange={handleChange}
@@ -606,12 +649,41 @@ export default function InformationsPage() {
                   required
                 />
               </div>
+              {/* Sélection de la compagnie d'assurance dans le formulaire d'édition */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="numeroAssurance" className="text-right">
+                <Label htmlFor="compagnie-edit" className="text-right">
+                  Compagnie d'Assurance
+                </Label>
+                <div className="col-span-3">
+                  <Select
+                    value={formData.compagnieId || ""}
+                    onValueChange={handleCompagnieChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une compagnie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingCompagnie ? (
+                        <SelectItem value="" disabled>Chargement...</SelectItem>
+                      ) : compagnieData?.compagnies?.length > 0 ? (
+                        compagnieData.compagnies.map((compagnie) => (
+                          <SelectItem key={compagnie.compagnieId} value={compagnie.compagnieId}>
+                            {compagnie.nomCompagnie || compagnie.nom}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>Aucune compagnie disponible</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="numeroAssurance_edit" className="text-right">
                   N° Assurance
                 </Label>
                 <Input
-                  id="numeroAssurance"
+                  id="numeroAssurance_edit"
                   name="numeroAssurance"
                   value={formData.numeroAssurance}
                   onChange={handleChange}
@@ -620,11 +692,11 @@ export default function InformationsPage() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cin" className="text-right">
+                <Label htmlFor="cin_edit" className="text-right">
                   CIN
                 </Label>
                 <Input
-                  id="cin"
+                  id="cin_edit"
                   name="cin"
                   value={formData.cin}
                   onChange={handleChange}
@@ -651,13 +723,13 @@ export default function InformationsPage() {
                   Vérifié
                 </Label>
                 <div className="flex items-center space-x-2 col-span-3">
-                  <Checkbox 
-                    id="statut-edit" 
-                    checked={formData.statut} 
+                  <Checkbox
+                    id="statut-edit"
+                    checked={formData.statut}
                     onCheckedChange={handleStatusChange}
                   />
-                  <label 
-                    htmlFor="statut-edit" 
+                  <label
+                    htmlFor="statut-edit"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
                     Information vérifiée
@@ -692,7 +764,7 @@ export default function InformationsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       <Toaster richColors position="top-center" />
     </SidebarProvider>
   );

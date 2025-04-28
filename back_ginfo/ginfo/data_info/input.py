@@ -13,6 +13,7 @@ class UtilisateurInput(graphene.InputObjectType):
 class InformationInput(graphene.InputObjectType):
     information_id = graphene.Int()
     utilisateur_id = graphene.ID(required=True)
+    compagnie_id = graphene.ID(required=True)
     numero_employe = graphene.String()
     adresse = graphene.String()
     numero_assurance = graphene.String()

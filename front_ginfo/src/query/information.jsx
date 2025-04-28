@@ -39,6 +39,15 @@ export const CREATE_INFORMATION = gql`
         cin
         statut
         emailNotification
+        utilisateur {
+          utilisateurId
+          nom
+          prenom
+        }
+        compagnieAssurance {
+          compagnieId
+          nomCompagnie
+        }
       }
     }
   }
@@ -55,6 +64,15 @@ export const UPDATE_INFORMATION = gql`
         cin
         statut
         emailNotification
+        utilisateur {
+          utilisateurId
+          nom
+          prenom
+        }
+        compagnieAssurance {
+          compagnieId
+          nomCompagnie
+        }
       }
     }
   }

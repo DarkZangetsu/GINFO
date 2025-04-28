@@ -207,9 +207,11 @@ class CreateInformation(graphene.Mutation):
     def mutate(root, info, information_data):
         try:
             utilisateur = Utilisateur.objects.get(pk=information_data.utilisateur_id)
+            compagnie_assurance = Compagnie_Assurance.objects.get(pk=information_data.compagnie_id)
             
             information = Information(
                 utilisateur=utilisateur,
+                compagnie_assurance=compagnie_assurance,
                 numero_employe=information_data.numero_employe,
                 adresse=information_data.adresse,
                 numero_assurance=information_data.numero_assurance,
