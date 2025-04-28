@@ -446,23 +446,23 @@ export default function InformationsPage() {
                 </Label>
                 <div className="col-span-3">
                   <Select
-                    value={formData.compagnieId || ""}
-                    onValueChange={handleCompagnieChange}
+                    value={formData.utilisateurId || ""}
+                    onValueChange={handleUtilisateurChange}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner une compagnie" />
+                      <SelectValue placeholder="Sélectionner un employé" />
                     </SelectTrigger>
                     <SelectContent>
-                      {loadingCompagnie ? (
+                      {loadingUtilisateurs ? (
                         <SelectItem value="" disabled>Chargement...</SelectItem>
-                      ) : compagnieData?.compagnies?.length > 0 ? (
-                        compagnieData.compagnies.map((compagnie) => (
-                          <SelectItem key={compagnie.compagnieId} value={compagnie.compagnieId}>
-                            {compagnie.nomCompagnie || compagnie.nom}
+                      ) : utilisateursData?.utilisateurs?.length > 0 ? (
+                        utilisateursData.utilisateurs.map((utilisateur) => (
+                          <SelectItem key={utilisateur.utilisateurId} value={utilisateur.utilisateurId}>
+                            {utilisateur.prenom} {utilisateur.nom}
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>Aucune compagnie disponible</SelectItem>
+                        <SelectItem value="" disabled>Aucun utilisateur disponible</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
@@ -501,7 +501,7 @@ export default function InformationsPage() {
                 </Label>
                 <div className="col-span-3">
                   <Select
-                    value={formData.compagnieId}
+                    value={formData.compagnieId || ""}
                     onValueChange={handleCompagnieChange}
                   >
                     <SelectTrigger>
