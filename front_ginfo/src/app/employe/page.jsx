@@ -6,6 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { toast } from "sonner"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Calendar } from "@/components/ui/calendar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -17,7 +26,9 @@ import { GET_UTILISATEUR } from "@/query/utilisateur"
 export default function EmployeePage() {
   const [userId, setUserId] = useState(null)
   const [date, setDate] = useState(new Date())
-  
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+
   useEffect(() => {
     try {
       const token = localStorage.getItem("token");
@@ -62,9 +73,16 @@ export default function EmployeePage() {
     );
   }
 
-  const utilisateur = data?.utilisateurById;
-  
-  if (!utilisateur) {
+  const utilisateur = data?.utilisateurById || {};
+
+  // Extraire les informations du tableau pour un accès plus facile
+  const userInfo = utilisateur.informations && utilisateur.informations.length > 0
+    ? utilisateur.informations[0]
+    : {};
+
+  console.log('Utilisateur data:', utilisateur);
+
+  if (!utilisateur || !utilisateur.nom) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <div className="w-full max-w-6xl px-4">
@@ -80,14 +98,14 @@ export default function EmployeePage() {
     );
   }
 
-  const initials = `${utilisateur.prenom.charAt(0)}${utilisateur.nom.charAt(0)}`.toUpperCase();
-  const isProfileUpToDate = utilisateur.informations?.statut === "true";
+  const initials = `${utilisateur.prenom?.charAt(0) || ''}${utilisateur.nom?.charAt(0) || ''}`.toUpperCase();
+  const isProfileUpToDate = userInfo?.statut === true; // Assurez-vous que la comparaison est correcte
 
   // Notifications avec condition de statut
   const notifications = [
     ...(isProfileUpToDate ? [] : [{
-      id: 0, 
-      title: "Mise à jour de profil requise", 
+      id: 0,
+      title: "Mise à jour de profil requise",
       description: "Veuillez mettre à jour votre profil. Contactez votre conseiller RH.",
       date: "Aujourd'hui",
       important: true
@@ -100,6 +118,44 @@ export default function EmployeePage() {
     { id: 1, title: "Réunion d'équipe", date: "Demain, 10:00", location: "Salle de conférence A" },
     { id: 2, title: "Formation sécurité", date: "24 mai, 14:00", location: "Salle de formation" },
   ];
+
+
+  // Fonction de déconnexion simplifiée
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+
+    try {
+      // Supprimer les tokens du localStorage
+      localStorage.removeItem("token");
+      
+      // Afficher une notification de succès
+      toast.success("Déconnexion réussie", {
+        description: "Vous avez été déconnecté avec succès.",
+        position: "top-center",
+        duration: 3000,
+        className: "animate-in fade-in slide-in-from-top",
+      });
+
+      // Animation de sortie et redirection
+      setTimeout(() => {
+        if (typeof document !== "undefined") {
+          document.body.classList.add('fade-out');
+        }
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 500);
+      }, 1000);
+    } catch (error) {
+      toast.error("Erreur de déconnexion", {
+        description: "Une erreur s'est produite lors de la déconnexion."
+      });
+      console.error("Logout error:", error);
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogoutDialog(false);
+    }
+  };
+
 
   return (
     <div className="flex justify-center min-h-screen bg-gray-50">
@@ -117,8 +173,16 @@ export default function EmployeePage() {
               </p>
             </div>
           </div>
-          <div className="ml-auto">
-            <Button asChild>
+          <div className="ml-auto mt-4 md:mt-0 flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="destructive"
+              onClick={() => setShowLogoutDialog(true)}
+              disabled={isLoggingOut}
+              className="transition-all duration-200 ease-in-out"
+            >
+              {isLoggingOut ? "Déconnexion en cours..." : "Se déconnecter"}
+            </Button>
+            <Button asChild className="ml-0 sm:ml-2">
               <a href="/profile-employe">
                 <User className="mr-2 h-4 w-4" />
                 Voir mon profil
@@ -133,7 +197,7 @@ export default function EmployeePage() {
             <TabsTrigger value="calendar">Calendrier</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="dashboard" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
@@ -170,7 +234,7 @@ export default function EmployeePage() {
                   )}
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -199,7 +263,7 @@ export default function EmployeePage() {
                 </CardContent>
               </Card>
             </div>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Informations personnelles</CardTitle>
@@ -209,7 +273,7 @@ export default function EmployeePage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Numéro d'employé</h4>
-                    <p>{utilisateur.informations?.numeroEmploye || "Non renseigné"}</p>
+                    <p>{userInfo?.numeroEmploye || "Non renseigné"}</p>
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Statut</h4>
@@ -227,25 +291,25 @@ export default function EmployeePage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Email</h4>
-                    <p>{utilisateur.email}</p>
+                    <p>{utilisateur.email || "Non renseigné"}</p>
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Adresse</h4>
-                    <p>{utilisateur.informations?.adresse || "Non renseignée"}</p>
+                    <p>{userInfo?.adresse || "Non renseignée"}</p>
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">CIN</h4>
-                    <p>{utilisateur.informations?.cin || "Non renseigné"}</p>
+                    <p>{userInfo?.cin || "Non renseigné"}</p>
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Numéro d'assurance</h4>
-                    <p>{utilisateur.informations?.numeroAssurance || "Non renseigné"}</p>
+                    <p>{userInfo?.numeroAssurance || "Non renseigné"}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="calendar">
             <Card>
               <CardHeader>
@@ -262,7 +326,7 @@ export default function EmployeePage() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="documents">
             <Card>
               <CardHeader>
@@ -281,6 +345,29 @@ export default function EmployeePage() {
           </TabsContent>
         </Tabs>
       </div>
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent className="sm:max-w-md animate-in fade-in-0 zoom-in-95">
+          <DialogHeader>
+            <DialogTitle>Confirmation de déconnexion</DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir vous déconnecter de l'application ?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowLogoutDialog(false)}>
+              Annuler
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleLogout} 
+              disabled={isLoggingOut}
+              className="transition-all duration-200 ease-in-out"
+            >
+              {isLoggingOut ? "Déconnexion en cours..." : "Se déconnecter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -297,10 +384,10 @@ function EmployeePageSkeleton() {
             <Skeleton className="h-4 w-32 mt-2" />
           </div>
         </div>
-        
+
         <div className="space-y-4">
           <Skeleton className="h-10 w-64" />
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
@@ -318,7 +405,7 @@ function EmployeePageSkeleton() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <Skeleton className="h-6 w-32" />
