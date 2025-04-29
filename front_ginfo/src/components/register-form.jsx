@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { useMutation, gql } from "@apollo/client"
 import { toast, Toaster } from "sonner"
+import { jwtDecode } from "jwt-decode"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -105,14 +106,38 @@ export function RegisterForm({
         if (data.createUtilisateur.token) {
           localStorage.setItem("token", data.createUtilisateur.token)
           localStorage.setItem("refreshToken", data.createUtilisateur.refreshToken)
+          
+          try {
+            // Décodage du token pour récupérer le rôle
+            const decodedToken = jwtDecode(data.createUtilisateur.token);
+            const userRole = decodedToken.role;
+            
+            toast.success("Inscription réussie", {
+              description: "Votre compte a été créé avec succès."
+            })
+            
+            // Redirection basée sur le rôle de l'utilisateur
+            if (userRole === "employé") {
+              window.location.href = "/employe";
+            } else if (userRole === "conseillerRH") {
+              window.location.href = "/dashboard";
+            } else if (userRole === "assurance") {
+              window.location.href = "/dashboard";
+            } else {
+              // Redirection par défaut
+              window.location.href = "/dashboard";
+            }
+          } catch (decodeError) {
+            console.error("Erreur lors du décodage du token:", decodeError);
+            window.location.href = "/dashboard";
+          }
+        } else {
+          // Si pas de token, redirection vers la page de connexion
+          toast.success("Inscription réussie", {
+            description: "Votre compte a été créé avec succès. Veuillez vous connecter."
+          })
+          window.location.href = "/login";
         }
-
-        toast.success("Inscription réussie", {
-          description: "Votre compte a été créé avec succès."
-        })
-
-        // Redirection vers le dashboard ou la page de connexion
-        window.location.href = data.createUtilisateur.token ? "/dashboard" : "/login"
       } else {
         toast.error("Erreur d'inscription", {
           description: data?.createUtilisateur?.message || "Une erreur s'est produite lors de l'inscription."

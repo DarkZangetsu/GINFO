@@ -51,7 +51,7 @@ export default function Home() {
             <div className="flex justify-center">
               <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 max-w-md">
                 <Image
-                  src="/api/placeholder/480/360"
+                  src="/ginfo.png"
                   alt="Interface GINFO"
                   width={480}
                   height={360}
@@ -65,11 +65,11 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-16 bg-white">
+      {/* <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Caractéristiques principales</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
+          
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
               <div className="bg-gray-200 text-black p-3 rounded-lg inline-block mb-4">
                 <UserCheck size={24} />
@@ -80,7 +80,7 @@ export default function Home() {
               </p>
             </div>
             
-            {/* Feature 2 */}
+         
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
               <div className="bg-gray-200 text-black p-3 rounded-lg inline-block mb-4">
                 <Shield size={24} />
@@ -91,7 +91,7 @@ export default function Home() {
               </p>
             </div>
             
-            {/* Feature 3 */}
+    
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
               <div className="bg-gray-200 text-black p-3 rounded-lg inline-block mb-4">
                 <FileText size={24} />
@@ -103,7 +103,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
       <section className="bg-black py-16 text-white">
