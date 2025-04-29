@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { useMutation, gql } from "@apollo/client"
 import { toast, Toaster } from "sonner"
+import { jwtDecode } from "jwt-decode"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -43,14 +44,32 @@ export function LoginForm({
       })
 
       if (data.login.success) {
+        // Store tokens in localStorage
         localStorage.setItem("token", data.login.token)
         localStorage.setItem("refreshToken", data.login.refreshToken)
         
-        toast.success("Connexion réussie", {
-          description: "Vous êtes maintenant connecté."
-        })
+        try {
+          const decodedToken = jwtDecode(data.login.token);
+          const userRole = decodedToken.role;
+          
+          toast.success("Connexion réussie", {
+            description: "Vous êtes maintenant connecté."
+          })
+          
+          // Redirect based on user role
+          if (userRole === "employé") {
+            window.location.href = "/employe";
+          } else if (userRole === "conseillerRH") {
+            window.location.href = "/dashboard";
+          } else {
+            
+            window.location.href = "/dashboard";
+          }
+        } catch (decodeError) {
+          console.error("Erreur lors du décodage du token:", decodeError);
 
-        window.location.href = "/dashboard"
+          window.location.href = "/dashboard";
+        }
       } else {
         toast.error("Erreur de connexion", {
           description: data.login.message || "Identifiants invalides"
