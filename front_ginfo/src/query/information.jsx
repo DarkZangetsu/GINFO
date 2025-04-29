@@ -10,6 +10,16 @@ export const GET_INFORMATIONS = gql`
       cin
       statut
       emailNotification
+      utilisateur {
+        utilisateurId
+        nom
+        prenom
+        email
+        role
+      }
+      compagnieAssurance {
+        compagnieId
+      }
     }
   }
 `;
@@ -24,9 +34,20 @@ export const GET_INFORMATION_BY_ID = gql`
       cin
       statut
       emailNotification
+      utilisateur {
+        utilisateurId
+        nom
+        prenom
+        email
+        role
+      }
+      compagnieAssurance {
+        compagnieId
+      }
     }
   }
 `;
+
 
 export const CREATE_INFORMATION = gql`
   mutation CreateInformation($informationData: InformationInput!) {

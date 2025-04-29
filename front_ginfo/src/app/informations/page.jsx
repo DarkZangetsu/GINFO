@@ -2,6 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client";
+import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+import { toast, Toaster } from "sonner";
+import {
+  PlusCircle,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  Mail,
+  User,
+  Building,
+  Lock
+} from "lucide-react";
+
+// Components
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -54,12 +70,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast, Toaster } from "sonner";
-import { PlusCircle, Pencil, Trash2, Check, X, Mail, User, Building, Lock } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { jwtDecode } from "jwt-decode";
-import { CREATE_INFORMATION, DELETE_INFORMATION, GET_INFORMATIONS, UPDATE_INFORMATION } from "@/query/information";
 
+// GraphQL Queries
+import {
+  CREATE_INFORMATION,
+  DELETE_INFORMATION,
+  GET_INFORMATIONS,
+  UPDATE_INFORMATION,
+  GET_INFORMATION_BY_ID
+} from "@/query/information";
 import { GET_UTILISATEURS } from "@/query/utilisateur";
 import { GET_COMPAGNIES } from "@/query/compagnie";
 
@@ -79,10 +98,10 @@ export default function InformationsPage() {
   const [currentInformation, setCurrentInformation] = useState(null);
   const [userId, setUserId] = useState(null);
 
-  // Formdata avec les noms de champs correspondant au backend
+  // Form data state with field names matching backend
   const [formData, setFormData] = useState({
     utilisateurId: "",
-    compagnieId: "", // Renommé pour correspondre à l'API
+    compagnieId: "",
     numeroEmploye: "",
     adresse: "",
     numeroAssurance: "",
@@ -91,13 +110,7 @@ export default function InformationsPage() {
     statut: false
   });
 
-  // État pour stocker les détails de l'employé actuel en mode édition
-  const [currentEmploye, setCurrentEmploye] = useState({
-    nom: "",
-    prenom: "",
-    email: ""
-  });
-
+  // Check for authentication
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -124,29 +137,29 @@ export default function InformationsPage() {
     }
   }, [router]);
 
+  // Form input handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Gestionnaire pour le changement d'utilisateur dans le Select
   const handleUtilisateurChange = (value) => {
     setFormData(prev => ({ ...prev, utilisateurId: value }));
   };
 
-  // Gestionnaire pour le changement de compagnie dans le Select
   const handleCompagnieChange = (value) => {
-    setFormData(prev => ({ ...prev, compagnieId: value })); // Modifié ici
+    setFormData(prev => ({ ...prev, compagnieId: value }));
   };
 
   const handleStatusChange = (checked) => {
     setFormData(prev => ({ ...prev, statut: checked }));
   };
 
+  // Modal handlers
   const openCreateModal = () => {
     setFormData({
       utilisateurId: "",
-      compagnieId: "", // Modifié ici
+      compagnieId: "",
       numeroEmploye: "",
       adresse: "",
       numeroAssurance: "",
@@ -158,16 +171,37 @@ export default function InformationsPage() {
   };
 
   const openEditModal = (information) => {
+    console.log("Information à éditer:", information);
+
+    let utilisateurId = "";
+    if (information.utilisateur && information.utilisateur.utilisateurId) {
+      utilisateurId = information.utilisateur.utilisateurId;
+    } else if (information.utilisateurId) {
+      utilisateurId = information.utilisateurId;
+    }
+
+
+    let compagnieId = "";
+    if (information.compagnieAssurance && information.compagnieAssurance.compagnieId) {
+      compagnieId = information.compagnieAssurance.compagnieId;
+    } else if (information.compagnie && information.compagnie.compagnieId) {
+      compagnieId = information.compagnie.compagnieId;
+    } else if (information.compagnieId) {
+      if (typeof information.compagnieId === 'object' && information.compagnieId !== null) {
+        compagnieId = information.compagnieId.compagnieId || information.compagnieId.id || "";
+      } else {
+        compagnieId = information.compagnieId;
+      }
+    }
+
+    console.log("utilisateurId extrait:", utilisateurId);
+    console.log("compagnieId extrait:", compagnieId);
+
     setCurrentInformation(information);
 
-    console.log("Structure information:", information);
-
-    const compagnieId = information.compagnieId ?
-      (typeof information.compagnieId === 'object' ?
-        information.compagnieId.compagnieId : information.compagnieId) : "";
 
     setFormData({
-      utilisateurId: information.utilisateur?.utilisateurId || "",
+      utilisateurId: utilisateurId,
       compagnieId: compagnieId,
       numeroEmploye: information.numeroEmploye || "",
       adresse: information.adresse || "",
@@ -177,22 +211,28 @@ export default function InformationsPage() {
       statut: Boolean(information.statut)
     });
 
-    if (information.utilisateur) {
-      setCurrentEmploye({
-        nom: information.utilisateur.nom || "",
-        prenom: information.utilisateur.prenom || "",
-        email: information.utilisateur.email || ""
-      });
-    }
-
     setIsEditModalOpen(true);
   };
+
+  useEffect(() => {
+    if (utilisateursData?.utilisateurs) {
+      console.log("Utilisateurs disponibles:", utilisateursData.utilisateurs);
+    }
+    if (compagnieData?.compagnies) {
+      console.log("Compagnies disponibles:", compagnieData.compagnies);
+    }
+  }, [utilisateursData, compagnieData]);
+  
+  useEffect(() => {
+    console.log("FormData mis à jour:", formData);
+  }, [formData]);
 
   const openDeleteDialog = (information) => {
     setCurrentInformation(information);
     setIsDeleteDialogOpen(true);
   };
 
+  // Form submission handlers
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
 
@@ -215,7 +255,7 @@ export default function InformationsPage() {
         statut: formData.statut
       };
 
-      const response = await createInformation({
+      await createInformation({
         variables: {
           informationData: informationInput
         }
@@ -257,7 +297,7 @@ export default function InformationsPage() {
         statut: formData.statut
       };
 
-      const response = await updateInformation({
+      await updateInformation({
         variables: {
           id: currentInformation.informationId,
           informationData: informationInput
@@ -296,6 +336,17 @@ export default function InformationsPage() {
       });
       console.error("Erreur lors de la suppression:", error);
     }
+  };
+
+  // Helper function to extract company name
+  const getCompanyName = (companyInfo) => {
+    if (!companyInfo) return "Non définie";
+
+    if (typeof companyInfo === 'object') {
+      return companyInfo.nomCompagnie || companyInfo.nom || "Non définie";
+    }
+
+    return "Non définie";
   };
 
   return (
@@ -353,7 +404,7 @@ export default function InformationsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.informations.length > 0 ? (
+                  {data?.informations?.length > 0 ? (
                     data.informations.map((info) => (
                       <TableRow key={info.informationId}>
                         <TableCell>
@@ -367,7 +418,7 @@ export default function InformationsPage() {
                         <TableCell>
                           <div className="flex items-center">
                             <Building className="h-4 w-4 mr-2 text-gray-500" />
-                            {info.compagnieId ? info.compagnieId.nom : "Non définie"}
+                            {getCompanyName(info.compagnieId)}
                           </div>
                         </TableCell>
                         <TableCell>{info.numeroAssurance}</TableCell>
@@ -603,24 +654,33 @@ export default function InformationsPage() {
           </DialogHeader>
           <form onSubmit={handleEditSubmit}>
             <div className="grid gap-4 py-4">
-              {/* Affichage de l'employé non modifiable */}
+              {/* Sélection de l'utilisateur */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="utilisateur-display" className="text-right">
+                <Label htmlFor="utilisateur-edit" className="text-right">
                   Employé
                 </Label>
                 <div className="col-span-3">
-                  <div className="flex items-center border rounded-md px-3 py-2 bg-gray-50">
-                    <User className="h-4 w-4 mr-2 text-gray-500" />
-                    {currentEmploye.prenom && currentEmploye.nom ? (
-                      <span className="text-sm">{currentEmploye.prenom} {currentEmploye.nom}</span>
-                    ) : (
-                      <span className="text-sm text-gray-400">Employé non sélectionné</span>
-                    )}
-                    <Lock className="h-4 w-4 ml-2 text-gray-400" />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Ce champ n'est pas modifiable
-                  </p>
+                  <Select
+                    value={formData.utilisateurId}
+                    onValueChange={handleUtilisateurChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un employé" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingUtilisateurs ? (
+                        <SelectItem value="" disabled>Chargement...</SelectItem>
+                      ) : utilisateursData?.utilisateurs?.length > 0 ? (
+                        utilisateursData.utilisateurs.map((utilisateur) => (
+                          <SelectItem key={utilisateur.utilisateurId} value={utilisateur.utilisateurId}>
+                            {utilisateur.prenom} {utilisateur.nom}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>Aucun utilisateur disponible</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -649,14 +709,14 @@ export default function InformationsPage() {
                   required
                 />
               </div>
-              {/* Sélection de la compagnie d'assurance dans le formulaire d'édition */}
+              {/* Sélection de la compagnie d'assurance */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="compagnie-edit" className="text-right">
                   Compagnie d'Assurance
                 </Label>
                 <div className="col-span-3">
                   <Select
-                    value={formData.compagnieId || ""}
+                    value={formData.compagnieId}
                     onValueChange={handleCompagnieChange}
                   >
                     <SelectTrigger>
