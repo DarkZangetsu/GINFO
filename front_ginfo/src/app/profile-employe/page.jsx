@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
-import { Shield, User, Mail, Briefcase, Home, CreditCard, FileText, CheckCircle2, ArrowLeft } from "lucide-react"
+import { Shield, Mail, Briefcase, Home, CreditCard, FileText, CheckCircle2, ArrowLeft } from "lucide-react"
 import { GET_UTILISATEUR } from "@/query/utilisateur"
 
 
