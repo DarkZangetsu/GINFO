@@ -19,6 +19,7 @@ export const GET_INFORMATIONS = gql`
       }
       compagnieAssurance {
         compagnieId
+        nomCompagnie
       }
     }
   }
@@ -43,6 +44,7 @@ export const GET_INFORMATION_BY_ID = gql`
       }
       compagnieAssurance {
         compagnieId
+        nomCompagnie
       }
     }
   }

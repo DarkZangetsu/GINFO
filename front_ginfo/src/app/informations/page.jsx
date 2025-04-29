@@ -338,15 +338,9 @@ export default function InformationsPage() {
     }
   };
 
-  // Helper function to extract company name
   const getCompanyName = (companyInfo) => {
-    if (!companyInfo) return "Non définie";
+    return companyInfo|| "Non définie";
 
-    if (typeof companyInfo === 'object') {
-      return companyInfo.nomCompagnie || companyInfo.nom || "Non définie";
-    }
-
-    return "Non définie";
   };
 
   return (
@@ -418,7 +412,7 @@ export default function InformationsPage() {
                         <TableCell>
                           <div className="flex items-center">
                             <Building className="h-4 w-4 mr-2 text-gray-500" />
-                            {getCompanyName(info.compagnieId)}
+                            {getCompanyName(info.compagnieAssurance.nomCompagnie)}
                           </div>
                         </TableCell>
                         <TableCell>{info.numeroAssurance}</TableCell>
