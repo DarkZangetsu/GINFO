@@ -60,9 +60,17 @@ export default function ProfilePage() {
     );
   }
 
-  const utilisateur = data?.utilisateurById;
+  const utilisateur = data?.utilisateurById || {};
+  
+  // Extraire les informations du tableau pour un accès plus facile
+  const userInfo = utilisateur.informations && utilisateur.informations.length > 0 
+    ? utilisateur.informations[0] 
+    : {};
 
-  if (!utilisateur) {
+  console.log('Utilisateur data:', utilisateur);
+  console.log('User Info:', userInfo);
+
+  if (!utilisateur || !utilisateur.nom) {
     return (
       <div className="flex justify-center min-h-screen bg-gray-50">
         <div className="w-full max-w-4xl px-4 py-8">
@@ -78,7 +86,7 @@ export default function ProfilePage() {
     );
   }
 
-  const initials = `${utilisateur.prenom.charAt(0)}${utilisateur.nom.charAt(0)}`.toUpperCase();
+  const initials = `${utilisateur.prenom?.charAt(0) || ''}${utilisateur.nom?.charAt(0) || ''}`.toUpperCase();
 
   return (
     <div className="flex justify-center min-h-screen bg-gray-50">
@@ -124,20 +132,20 @@ export default function ProfilePage() {
                     <div className="text-sm text-muted-foreground">Numéro d'employé</div>
                     <div className="font-medium flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-primary" />
-                      {utilisateur.informations?.numeroEmploye || "Non renseigné"}
+                      {userInfo?.numeroEmploye || "Non renseigné"}
                     </div>
                   </div>
                   
                   <div className="space-y-1">
                     <div className="text-sm text-muted-foreground">Statut</div>
-                    {utilisateur.informations?.statut === "true" ? (
+                    {userInfo?.statut === true ? (
                       <div className="font-medium flex items-center gap-2 text-green-600">
                         <CheckCircle2 className="h-4 w-4" />
                         À jour
                       </div>
                     ) : (
                       <div className="font-medium">
-                        {utilisateur.informations?.statut || "Non renseigné"}
+                        Mise à jour requise
                       </div>
                     )}
                   </div>
@@ -146,7 +154,7 @@ export default function ProfilePage() {
                     <div className="text-sm text-muted-foreground">Numéro d'assurance</div>
                     <div className="font-medium flex items-center gap-2">
                       <CreditCard className="h-4 w-4 text-primary" />
-                      {utilisateur.informations?.numeroAssurance || "Non renseigné"}
+                      {userInfo?.numeroAssurance || "Non renseigné"}
                     </div>
                   </div>
                   
@@ -154,7 +162,7 @@ export default function ProfilePage() {
                     <div className="text-sm text-muted-foreground">CIN</div>
                     <div className="font-medium flex items-center gap-2">
                       <FileText className="h-4 w-4 text-primary" />
-                      {utilisateur.informations?.cin || "Non renseigné"}
+                      {userInfo?.cin || "Non renseigné"}
                     </div>
                   </div>
                   
@@ -162,7 +170,7 @@ export default function ProfilePage() {
                     <div className="text-sm text-muted-foreground">Adresse</div>
                     <div className="font-medium flex items-center gap-2">
                       <Home className="h-4 w-4 text-primary" />
-                      {utilisateur.informations?.adresse || "Non renseignée"}
+                      {userInfo?.adresse || "Non renseignée"}
                     </div>
                   </div>
                 </div>
