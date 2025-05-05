@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-backend
+  labels:
+    app: django-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django-backend
+  template:
+    metadata:
+      labels:
+        app: django-backend
+    spec:
+      containers:
+      - name: django
+        image: django-app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          value: "ginfo.settings"
+        - name: DEBUG
+          value: "False"
+        - name: ALLOWED_HOSTS
+          value: "*"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"

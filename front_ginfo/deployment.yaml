@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextjs-frontend
+  labels:
+    app: nextjs-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextjs-frontend
+  template:
+    metadata:
+      labels:
+        app: nextjs-frontend
+    spec:
+      containers:
+      - name: nextjs
+        image: nextjs-app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://django-backend-service:80"
+        resources:
+          limits:
+            cpu: "300m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
