@@ -5,7 +5,9 @@ metadata:
   labels:
     app: django-backend
 spec:
-  replicas: 1
+  replicas: 2
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: django-backend

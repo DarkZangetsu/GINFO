@@ -10,3 +10,7 @@ spec:
     targetPort: 3000
     nodePort: 30090 # Choisir un port entre 30000-32767
   type: NodePort
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
